@@ -3148,11 +3148,11 @@
       if (!data.session) return false;
       currentUser = user;
       currentDoctorId = doctorId;
+      // encKey مش متاح من غير كلمة المرور — هنعمل null وندي المستخدم يسجل دخول
+      encKey = null;
       await loadDoctorData();
       return true;
     }
-
-    async function loadDoctorData() {
       const { data: doc } = await db.from('doctors').select('*').eq('id', currentDoctorId).single();
       if (doc) DB.doctor = { ...doc };
 
@@ -3184,44 +3184,39 @@
       document.getElementById('loginPass').value = '';
     }
 
-    async function checkSession() {
-      const s = localStorage.getItem('miaadi_session');
-      if (!s) return false;
-      const { user, doctorId } = JSON.parse(s);
-      const { data } = await db.auth.getSession();
-      if (!data.session) return false;
-      currentUser = user;
-      currentDoctorId = doctorId;
-      await loadDoctorData();
-      return true;
-    }
-
     async function saveWithUser() {
-      if (!currentDoctorId) return;
+      if (!currentDoctorId) { console.warn('saveWithUser: no currentDoctorId'); return; }
 
-      // حفظ البيشنتس (مشفرة)
-      for (const p of DB.patients) {
-        const enc = await encryptPatient(p);
-        await db.from('patients').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
-      }
-      // حفظ المواعيد (مشفرة)
-      for (const a of DB.appointments) {
-        const enc = await encryptAppointment(a);
-        await db.from('appointments').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
-      }
-      // حفظ الطلبات
-      for (const r of DB.requests) {
-        await db.from('requests').upsert({ ...r, doctor_id: currentDoctorId }, { onConflict: 'id' });
-      }
-      // حفظ الروشتات (مشفرة)
-      for (const rx of DB.prescriptions) {
-        const enc = await encryptPrescription(rx);
-        await db.from('prescriptions').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
-      }
-      // حفظ الإشعارات
-      for (const n of DB.notifications) {
-        await db.from('notifications').upsert({ ...n, doctor_id: currentDoctorId }, { onConflict: 'id' });
-      }
+      try {
+        // حفظ البيشنتس
+        for (const p of DB.patients) {
+          const enc = encKey ? await encryptPatient(p) : p;
+          const { error } = await db.from('patients').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
+          if (error) console.error('patients upsert error:', error.message);
+        }
+        // حفظ المواعيد
+        for (const a of DB.appointments) {
+          const enc = encKey ? await encryptAppointment(a) : a;
+          const { error } = await db.from('appointments').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
+          if (error) console.error('appointments upsert error:', error.message);
+        }
+        // حفظ الطلبات
+        for (const r of DB.requests) {
+          const { error } = await db.from('requests').upsert({ ...r, doctor_id: currentDoctorId }, { onConflict: 'id' });
+          if (error) console.error('requests upsert error:', error.message);
+        }
+        // حفظ الروشتات
+        for (const rx of DB.prescriptions) {
+          const enc = encKey ? await encryptPrescription(rx) : rx;
+          const { error } = await db.from('prescriptions').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
+          if (error) console.error('prescriptions upsert error:', error.message);
+        }
+        // حفظ الإشعارات
+        for (const n of DB.notifications) {
+          const { error } = await db.from('notifications').upsert({ ...n, doctor_id: currentDoctorId }, { onConflict: 'id' });
+          if (error) console.error('notifications upsert error:', error.message);
+        }
+      } catch(e) { console.error('saveWithUser error:', e); }
     }
 
     function togglePass(id, btn) {
