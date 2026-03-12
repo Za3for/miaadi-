@@ -3129,7 +3129,7 @@
     }
 
     function doLogout() {
-      if (!confirm('هتسجل خروج؟')) return;
+      stopRealtime(); if (!confirm('هتسجل خروج؟')) return;
       db.auth.signOut();
       localStorage.removeItem('miaadi_session');
       currentUser = null; currentDoctorId = null; encKey = null;
@@ -3250,9 +3250,65 @@
     // ================================================
     // BOOT APP
     // ================================================
+    // ================================================
+    // REALTIME — تحديث فوري بين الأجهزة
+    // ================================================
+    let realtimeChannel = null;
+
+    function startRealtime() {
+      if (realtimeChannel) { realtimeChannel.unsubscribe(); realtimeChannel = null; }
+
+      realtimeChannel = db.channel('doctor_' + currentDoctorId)
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'appointments',
+          filter: 'doctor_id=eq.' + currentDoctorId
+        }, async (payload) => {
+          const { data: apts } = await db.from('appointments').select('*').eq('doctor_id', currentDoctorId);
+          DB.appointments = await Promise.all((apts || []).map(decryptAppointment));
+          realtimeUpdate();
+          showToast('🔄 تم تحديث المواعيد');
+        })
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'patients',
+          filter: 'doctor_id=eq.' + currentDoctorId
+        }, async (payload) => {
+          const { data: pats } = await db.from('patients').select('*').eq('doctor_id', currentDoctorId);
+          DB.patients = await Promise.all((pats || []).map(decryptPatient));
+          realtimeUpdate();
+          showToast('🔄 تم تحديث البيشنتس');
+        })
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'requests',
+          filter: 'doctor_id=eq.' + currentDoctorId
+        }, async (payload) => {
+          const { data: reqs } = await db.from('requests').select('*').eq('doctor_id', currentDoctorId);
+          DB.requests = reqs || [];
+          realtimeUpdate();
+          showToast('🔔 طلب حجز جديد!');
+        })
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'notifications',
+          filter: 'doctor_id=eq.' + currentDoctorId
+        }, async (payload) => {
+          const { data: notifs } = await db.from('notifications').select('*').eq('doctor_id', currentDoctorId);
+          DB.notifications = notifs || [];
+          renderNotifs(); updateBadges();
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Realtime متصل');
+          }
+        });
+    }
+
+    function stopRealtime() {
+      if (realtimeChannel) { realtimeChannel.unsubscribe(); realtimeChannel = null; }
+    }
+
     function bootApp() {
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('appScreen').classList.add('active');
+      startRealtime();
       // Populate settings
       const d = DB.doctor;
       document.getElementById('set_name').value = d.name || '';
