@@ -3202,25 +3202,25 @@
       // حفظ البيشنتس (مشفرة)
       for (const p of DB.patients) {
         const enc = await encryptPatient(p);
-        await db.from('patients').upsert({ ...enc, doctor_id: currentDoctorId });
+        await db.from('patients').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
       }
       // حفظ المواعيد (مشفرة)
       for (const a of DB.appointments) {
         const enc = await encryptAppointment(a);
-        await db.from('appointments').upsert({ ...enc, doctor_id: currentDoctorId });
+        await db.from('appointments').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
       }
       // حفظ الطلبات
       for (const r of DB.requests) {
-        await db.from('requests').upsert({ ...r, doctor_id: currentDoctorId });
+        await db.from('requests').upsert({ ...r, doctor_id: currentDoctorId }, { onConflict: 'id' });
       }
       // حفظ الروشتات (مشفرة)
       for (const rx of DB.prescriptions) {
         const enc = await encryptPrescription(rx);
-        await db.from('prescriptions').upsert({ ...enc, doctor_id: currentDoctorId });
+        await db.from('prescriptions').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
       }
       // حفظ الإشعارات
       for (const n of DB.notifications) {
-        await db.from('notifications').upsert({ ...n, doctor_id: currentDoctorId });
+        await db.from('notifications').upsert({ ...n, doctor_id: currentDoctorId }, { onConflict: 'id' });
       }
     }
 
