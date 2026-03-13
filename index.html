@@ -2156,8 +2156,6 @@
 
   <!-- ===== SECRETARY SCREEN ===== -->
   <div id="secScreen" style="display:none;min-height:100vh;background:var(--bg);font-family:'Cairo',sans-serif;direction:rtl">
-
-    <!-- Top Bar -->
     <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100">
       <div style="display:flex;align-items:center;gap:12px">
         <div style="font-size:20px;font-weight:900;color:var(--accent)">ميعادي</div>
@@ -2168,10 +2166,7 @@
         <button class="btn btn-ghost btn-sm" onclick="doLogout()">خروج 🚪</button>
       </div>
     </div>
-
     <div style="max-width:860px;margin:0 auto;padding:20px 16px">
-
-      <!-- Stats -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
         <div class="card" style="text-align:center;padding:18px 10px">
           <div style="font-size:30px;font-weight:900;color:var(--accent)" id="secStatToday">0</div>
@@ -2186,14 +2181,10 @@
           <div style="font-size:12px;color:var(--text2)">دفع ✅</div>
         </div>
       </div>
-
-      <!-- Actions -->
       <div style="display:flex;gap:10px;margin-bottom:20px">
         <button class="btn btn-primary" style="flex:1;font-size:15px;padding:14px" onclick="openSecAdd()">➕ تسجيل مريض جديد</button>
         <button class="btn btn-ghost" style="padding:14px 18px" onclick="secRefresh()">🔄</button>
       </div>
-
-      <!-- Queue -->
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div class="card-title" style="margin:0">قائمة اليوم 📋</div>
@@ -2202,7 +2193,6 @@
         <div id="secPatList"><div style="text-align:center;padding:40px;color:var(--text2)">لا يوجد مرضى مسجلين اليوم</div></div>
       </div>
     </div>
-
     <!-- Add Patient Modal -->
     <div class="modal-overlay" id="secAddModal" style="display:none">
       <div class="modal" style="max-width:520px">
@@ -2212,52 +2202,20 @@
         </div>
         <div class="modal-body">
           <div class="form-row">
-            <div class="form-group">
-              <div class="form-label">الاسم الكامل *</div>
-              <input class="form-input" id="sadd_name" placeholder="اسم المريض">
-            </div>
-            <div class="form-group">
-              <div class="form-label">رقم الهاتف *</div>
-              <input class="form-input" id="sadd_phone" placeholder="01XXXXXXXXX" type="tel">
-            </div>
+            <div class="form-group"><div class="form-label">الاسم الكامل *</div><input class="form-input" id="sadd_name" placeholder="اسم المريض"></div>
+            <div class="form-group"><div class="form-label">رقم الهاتف *</div><input class="form-input" id="sadd_phone" placeholder="01XXXXXXXXX" type="tel"></div>
           </div>
           <div class="form-row">
-            <div class="form-group">
-              <div class="form-label">السن</div>
-              <input class="form-input" id="sadd_age" placeholder="السن" type="number" min="1" max="120">
-            </div>
-            <div class="form-group">
-              <div class="form-label">النوع</div>
-              <select class="form-select" id="sadd_gender">
-                <option value="ذكر">ذكر</option>
-                <option value="أنثى">أنثى</option>
-              </select>
-            </div>
+            <div class="form-group"><div class="form-label">السن</div><input class="form-input" id="sadd_age" placeholder="السن" type="number" min="1" max="120"></div>
+            <div class="form-group"><div class="form-label">النوع</div><select class="form-select" id="sadd_gender"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div>
           </div>
-          <div class="form-group">
-            <div class="form-label">الشكوى</div>
-            <input class="form-input" id="sadd_complaint" placeholder="الشكوى الرئيسية...">
-          </div>
-          <div class="form-group">
-            <div class="form-label">وقت الموعد</div>
-            <input class="form-input" id="sadd_time" type="time">
-          </div>
+          <div class="form-group"><div class="form-label">الشكوى</div><input class="form-input" id="sadd_complaint" placeholder="الشكوى الرئيسية..."></div>
+          <div class="form-group"><div class="form-label">وقت الموعد</div><input class="form-input" id="sadd_time" type="time"></div>
           <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-top:4px;border:1px solid var(--border)">
             <div style="font-size:13px;font-weight:700;margin-bottom:12px">💰 الدفع</div>
             <div class="form-row">
-              <div class="form-group">
-                <div class="form-label">المبلغ (جنيه)</div>
-                <input class="form-input" id="sadd_amount" type="number" placeholder="0">
-              </div>
-              <div class="form-group">
-                <div class="form-label">طريقة الدفع</div>
-                <select class="form-select" id="sadd_method">
-                  <option value="cash">كاش 💵</option>
-                  <option value="card">كارت 💳</option>
-                  <option value="transfer">تحويل 📲</option>
-                  <option value="none">لم يدفع بعد</option>
-                </select>
-              </div>
+              <div class="form-group"><div class="form-label">المبلغ (جنيه)</div><input class="form-input" id="sadd_amount" type="number" placeholder="0"></div>
+              <div class="form-group"><div class="form-label">طريقة الدفع</div><select class="form-select" id="sadd_method"><option value="cash">كاش 💵</option><option value="card">كارت 💳</option><option value="transfer">تحويل 📲</option><option value="none">لم يدفع بعد</option></select></div>
             </div>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
               <input type="checkbox" id="sadd_paid" style="width:16px;height:16px;accent-color:var(--accent)">
@@ -2271,7 +2229,6 @@
         </div>
       </div>
     </div>
-
     <!-- Pay Modal -->
     <div class="modal-overlay" id="secPayModal" style="display:none">
       <div class="modal" style="max-width:380px">
@@ -2282,18 +2239,8 @@
         <div class="modal-body">
           <div id="secPayName" style="font-size:15px;font-weight:700;margin-bottom:16px;color:var(--text)"></div>
           <div class="form-row">
-            <div class="form-group">
-              <div class="form-label">المبلغ (جنيه)</div>
-              <input class="form-input" id="spay_amount" type="number">
-            </div>
-            <div class="form-group">
-              <div class="form-label">طريقة الدفع</div>
-              <select class="form-select" id="spay_method">
-                <option value="cash">كاش 💵</option>
-                <option value="card">كارت 💳</option>
-                <option value="transfer">تحويل 📲</option>
-              </select>
-            </div>
+            <div class="form-group"><div class="form-label">المبلغ (جنيه)</div><input class="form-input" id="spay_amount" type="number"></div>
+            <div class="form-group"><div class="form-label">طريقة الدفع</div><select class="form-select" id="spay_method"><option value="cash">كاش 💵</option><option value="card">كارت 💳</option><option value="transfer">تحويل 📲</option></select></div>
           </div>
         </div>
         <div class="modal-foot">
@@ -3018,15 +2965,18 @@
     }
 
     async function decryptPatient(p) {
+      let visits = p.visits;
+      if (typeof visits === 'string') { try { visits = JSON.parse(visits); } catch(e) { visits = []; } }
+      visits = visits || [];
       return {
         ...p,
         complaint: await decryptText(p.complaint),
-        history: await decryptText(p.history),
-        visits: await Promise.all((p.visits || []).map(async v => ({
+        history:   await decryptText(p.history),
+        visits: await Promise.all(visits.map(async v => ({
           ...v,
           complaint: await decryptText(v.complaint),
           diagnosis: await decryptText(v.diagnosis),
-          notes: await decryptText(v.notes)
+          notes:     await decryptText(v.notes)
         })))
       };
     }
@@ -3042,9 +2992,9 @@
     async function decryptAppointment(a) {
       return {
         ...a,
-        patId:        a.pat_id      || a.patId,
-        patName:      a.pat_name    || a.patName,
-        createdAt:    a.created_at  || a.createdAt,
+        patId:        a.pat_id       || a.patId,
+        patName:      a.pat_name     || a.patName,
+        createdAt:    a.created_at   || a.createdAt,
         payConfirmed: a.pay_confirmed || false,
         payAmount:    a.pay_amount    || 0,
         payMethod:    a.pay_method    || null,
@@ -3335,7 +3285,7 @@
         const r1 = await db.auth.signInWithPassword({ email: user + '@gmail.com', password: pass });
         if (!r1.error) { data = r1.data; error = null; }
         else {
-          const r2 = await db.auth.signInWithPassword({ email: user + '@miaadi.sec', password: pass });
+          const r2 = await db.auth.signInWithPassword({ email: user + '@gmail.com', password: pass });
           data = r2.data; error = r2.error;
         }
       } catch (fetchErr) {
@@ -3401,7 +3351,7 @@
       stopRealtime(); if (!confirm('هتسجل خروج؟')) return;
       db.auth.signOut();
       localStorage.removeItem('miaadi_session');
-      currentUser = null; currentDoctorId = null; encKey = null; currentRole = 'doctor';
+      currentUser = null; currentDoctorId = null; encKey = null; currentRole = 'doctor'; currentRole = 'doctor';
       document.getElementById('authScreen').classList.remove('hidden');
       document.getElementById('appScreen').classList.remove('active');
       showLogin();
@@ -3604,21 +3554,47 @@
         // حفظ البيشنتس (مشفرة)
         for (const p of DB.patients) {
           const enc = await encryptPatient(p);
-          const { error } = await db.from('patients').upsert(
-            { ...enc, doctor_id: currentDoctorId },
-            { onConflict: 'id' }
-          );
-          if (error) console.error('Error saving patient:', error);
+          const row = {
+            id:         enc.id,
+            doctor_id:  currentDoctorId,
+            name:       enc.name,
+            phone:      enc.phone,
+            age:        enc.age,
+            gender:     enc.gender,
+            source:     enc.source,
+            color:      enc.color,
+            complaint:  enc.complaint,
+            history:    enc.history,
+            visits:     JSON.stringify(enc.visits || []),
+            created_at: enc.createdAt || enc.created_at || new Date().toISOString()
+          };
+          const { error } = await db.from('patients').upsert(row, { onConflict: 'id' });
+          if (error) console.error('Error saving patient:', error.message);
         }
 
         // حفظ المواعيد (مشفرة)
         for (const a of DB.appointments) {
           const enc = await encryptAppointment(a);
-          const { error } = await db.from('appointments').upsert(
-            { ...enc, doctor_id: currentDoctorId },
-            { onConflict: 'id' }
-          );
-          if (error) console.error('Error saving appointment:', error);
+          const row = {
+            id:            enc.id,
+            doctor_id:     currentDoctorId,
+            pat_id:        enc.patId   || enc.pat_id,
+            pat_name:      enc.patName || enc.pat_name,
+            date:          enc.date,
+            time:          enc.time,
+            type:          enc.type,
+            payment:       enc.payment,
+            status:        enc.status,
+            source:        enc.source,
+            complaint:     enc.complaint,
+            notes:         enc.notes,
+            pay_confirmed: enc.payConfirmed || enc.pay_confirmed || false,
+            pay_amount:    enc.payAmount    || enc.pay_amount    || 0,
+            pay_method:    enc.payMethod    || enc.pay_method    || null,
+            created_at:    enc.createdAt    || enc.created_at    || new Date().toISOString()
+          };
+          const { error } = await db.from('appointments').upsert(row, { onConflict: 'id' });
+          if (error) console.error('Error saving appointment:', error.message);
         }
 
         // حفظ الطلبات
@@ -3713,8 +3689,8 @@
           if (localSaveInProgress) return;
           const { data: apts } = await db.from('appointments').select('*').eq('doctor_id', currentDoctorId);
           DB.appointments = await Promise.all((apts || []).map(decryptAppointment));
-          if (currentRole === 'secretary') renderSecList();
-          else { realtimeUpdate(); showToast('🔄 تحديث مواعيد من جهاز آخر'); }
+          if (currentRole === 'secretary') { if(typeof renderSecList==='function') renderSecList(); }
+          else { realtimeUpdate(); showToast('🔄 تحديث مواعيد'); }
         })
         .on('postgres_changes', {
           event: '*', schema: 'public', table: 'patients',
@@ -3723,7 +3699,7 @@
           if (localSaveInProgress) return;
           const { data: pats } = await db.from('patients').select('*').eq('doctor_id', currentDoctorId);
           DB.patients = await Promise.all((pats || []).map(decryptPatient));
-          if (currentRole === 'secretary') renderSecList();
+          if (currentRole === 'secretary') { if(typeof renderSecList==='function') renderSecList(); }
           else { realtimeUpdate(); showToast('🔄 تحديث بيانات'); }
         })
         .on('postgres_changes', {
@@ -3858,7 +3834,7 @@
     // ================================================
     function renderDashboard() {
       const d = DB.doctor;
-      document.getElementById('dashSub').textContent = `مرحباً ${d.name || ''} — ${fmtDate(today())}`;
+      document.getElementById('dashSub').textContent = `مرحباً ${d.name} — ${fmtDate(today())}`;
 
       const total = DB.appointments.length;
       const todayA = DB.appointments.filter(a => a.date === today());
@@ -4129,7 +4105,10 @@
         </div>
         <div class="pat-foot">
           <span>📅 ${last ? fmtDate(last.date) : 'لا يوجد زيارات'}</span>
-          <span style="color:var(--accent);font-size:12px">عرض الملف ›</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="color:var(--accent);font-size:12px">عرض الملف ›</span>
+            <button class="ib ib-red" title="حذف البيشنت" onclick="event.stopPropagation();deletePatient('${p.id}')">🗑</button>
+          </div>
         </div>
       </div>`;
       }).join('');
@@ -4961,16 +4940,16 @@
     };
   
     // ================================================================
-    // SECRETARY APP
+    // SECRETARY APP + DELETE PATIENT
     // ================================================================
 
     function bootSecApp() {
       document.getElementById('secScreen').style.display = '';
       document.getElementById('appScreen').style.display = 'none';
-      const d = DB.doctor || {};
-      document.getElementById('secDoctorBadge').textContent = (d.name || '') + (d.clinic ? ' · ' + d.clinic : '');
-      const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
-      document.getElementById('secTodayDate').textContent = new Date().toLocaleDateString('ar-EG', opts);
+      var d = DB.doctor || {};
+      document.getElementById('secDoctorBadge').textContent = (d.name||'') + (d.clinic?' · '+d.clinic:'');
+      var opts = {weekday:'long',year:'numeric',month:'long',day:'numeric'};
+      document.getElementById('secTodayDate').textContent = new Date().toLocaleDateString('ar-EG',opts);
       renderSecList();
     }
 
@@ -4978,54 +4957,66 @@
 
     function renderSecList() {
       var todayStr = new Date().toISOString().slice(0,10);
-      var todayApts = DB.appointments.filter(function(a){ return (a.date||'').slice(0,10) === todayStr; });
+      var todayApts = DB.appointments.filter(function(a){ return (a.date||'').slice(0,10)===todayStr; });
       document.getElementById('secStatToday').textContent   = todayApts.length;
       document.getElementById('secStatWaiting').textContent = todayApts.filter(function(a){ return !a.payConfirmed; }).length;
       document.getElementById('secStatPaid').textContent    = todayApts.filter(function(a){ return  a.payConfirmed; }).length;
-
       var el = document.getElementById('secPatList');
       if (!todayApts.length) {
         el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">لا يوجد مرضى مسجلين اليوم</div>';
         return;
       }
       var sorted = todayApts.slice().sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
-      var methodLabel = { cash:'💵 كاش', card:'💳 كارت', transfer:'📲 تحويل' };
+      var methodLabel = {cash:'💵 كاش', card:'💳 كارت', transfer:'📲 تحويل'};
       var html = '';
-      for (var i = 0; i < sorted.length; i++) {
-        var a    = sorted[i];
+      for (var i=0; i<sorted.length; i++) {
+        var a = sorted[i];
         var paid = a.payConfirmed;
-        var patName  = a.patName || a.pat_name || '—';
-        var timeStr  = a.time ? '⏰ ' + a.time : '';
-        var cmpStr   = a.complaint ? ' · ' + a.complaint : '';
-        var payInfo  = paid ? '<div style="font-size:12px;color:#10b981;margin-top:4px;font-weight:600">' + (methodLabel[a.payMethod]||'💰') + ' ' + (a.payAmount||0) + ' جنيه</div>' : '';
-        var payBtn   = paid
+        var patName = a.patName||a.pat_name||'—';
+        var timeStr = a.time ? '⏰ '+a.time : '';
+        var cmpStr  = a.complaint ? ' · '+a.complaint : '';
+        var payInfo = paid ? '<div style="font-size:12px;color:#10b981;margin-top:4px;font-weight:600">'+(methodLabel[a.payMethod]||'💰')+' '+(a.payAmount||0)+' جنيه</div>' : '';
+        var payBtn  = paid
           ? '<div style="font-size:12px;font-weight:700;color:#10b981;background:rgba(16,185,129,.1);padding:4px 10px;border-radius:20px">✅ دفع</div>'
-          : '<button class="btn btn-primary btn-sm" data-secpay="' + i + '">💰 دفع</button>';
+          : '<button class="btn btn-primary btn-sm" data-secpay="'+i+'">💰 دفع</button>';
+        var delBtn = '<button class="btn btn-ghost btn-sm" style="color:var(--red);margin-top:4px" data-secdel="'+i+'">🗑</button>';
         html += '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)">'
-          + '<div style="min-width:30px;height:30px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">' + (i+1) + '</div>'
-          + '<div style="flex:1">'
-          + '<div style="font-weight:700;font-size:15px">' + patName + '</div>'
-          + '<div style="font-size:12px;color:var(--text2);margin-top:2px">' + timeStr + cmpStr + '</div>'
-          + payInfo
-          + '</div>'
-          + '<div>' + payBtn + '</div>'
-          + '</div>';
+          +'<div style="min-width:30px;height:30px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">'+(i+1)+'</div>'
+          +'<div style="flex:1">'
+          +'<div style="font-weight:700;font-size:15px">'+patName+'</div>'
+          +'<div style="font-size:12px;color:var(--text2);margin-top:2px">'+timeStr+cmpStr+'</div>'
+          +payInfo
+          +'</div>'
+          +'<div style="display:flex;flex-direction:column;align-items:center;gap:4px">'+payBtn+delBtn+'</div>'
+          +'</div>';
       }
       el.innerHTML = html;
-      // attach pay button events via data attribute (avoids quote escaping issues)
       el.querySelectorAll('[data-secpay]').forEach(function(btn) {
         var idx = parseInt(btn.getAttribute('data-secpay'));
         var apt = sorted[idx];
-        btn.addEventListener('click', function() {
-          openSecPay(apt.id, apt.patName || apt.pat_name || '');
-        });
+        btn.addEventListener('click', function() { openSecPay(apt.id, apt.patName||apt.pat_name||''); });
+      });
+      el.querySelectorAll('[data-secdel]').forEach(function(btn) {
+        var idx = parseInt(btn.getAttribute('data-secdel'));
+        var apt = sorted[idx];
+        btn.addEventListener('click', function() { deleteSecAppt(apt.id, apt.patId||apt.pat_id); });
       });
     }
 
-    // ---- Add patient ----
+    async function deleteSecAppt(apptId, patId) {
+      if (!confirm('هتمسح المريض ده من قائمة اليوم؟')) return;
+      var apptErr = (await db.from('appointments').delete().eq('id', apptId)).error;
+      if (apptErr) { showToast('❌ خطأ: '+apptErr.message); return; }
+      if (patId) await db.from('patients').delete().eq('id', patId);
+      DB.appointments = DB.appointments.filter(function(a){ return a.id !== apptId; });
+      DB.patients     = DB.patients.filter(function(p){ return p.id !== patId; });
+      renderSecList();
+      showToast('✅ تم الحذف');
+    }
+
     function openSecAdd() {
       document.getElementById('sadd_time').value = new Date().toTimeString().slice(0,5);
-      document.getElementById('sadd_amount').value = DB.doctor.price || '';
+      document.getElementById('sadd_amount').value = (DB.doctor && DB.doctor.price) ? DB.doctor.price : '';
       document.getElementById('sadd_name').value = '';
       document.getElementById('sadd_phone').value = '';
       document.getElementById('sadd_age').value = '';
@@ -5036,88 +5027,98 @@
     function closeSecAdd() { document.getElementById('secAddModal').style.display = 'none'; }
 
     async function saveSecPatient() {
-      const name      = document.getElementById('sadd_name').value.trim();
-      const phone     = document.getElementById('sadd_phone').value.trim();
-      const age       = document.getElementById('sadd_age').value;
-      const gender    = document.getElementById('sadd_gender').value;
-      const complaint = document.getElementById('sadd_complaint').value.trim();
-      const time      = document.getElementById('sadd_time').value;
-      const amount    = parseInt(document.getElementById('sadd_amount').value) || 0;
-      const method    = document.getElementById('sadd_method').value;
-      const paid      = document.getElementById('sadd_paid').checked && method !== 'none';
+      var name     = document.getElementById('sadd_name').value.trim();
+      var phone    = document.getElementById('sadd_phone').value.trim();
+      var age      = document.getElementById('sadd_age').value;
+      var gender   = document.getElementById('sadd_gender').value;
+      var complaint= document.getElementById('sadd_complaint').value.trim();
+      var time     = document.getElementById('sadd_time').value;
+      var amount   = parseInt(document.getElementById('sadd_amount').value)||0;
+      var method   = document.getElementById('sadd_method').value;
+      var paid     = document.getElementById('sadd_paid').checked && method!=='none';
 
       if (!name)  { showToast('⚠️ اكتب اسم المريض'); return; }
       if (!phone) { showToast('⚠️ اكتب رقم الهاتف'); return; }
 
-      const todayStr = new Date().toISOString().slice(0,10);
-      const patId    = crypto.randomUUID();
-      const apptId   = crypto.randomUUID();
-      const now      = new Date().toISOString();
+      var todayStr = new Date().toISOString().slice(0,10);
+      var patId    = crypto.randomUUID();
+      var apptId   = crypto.randomUUID();
+      var nowStr   = new Date().toISOString();
 
-      // encrypt & save patient
-      const patPlain = { id:patId, doctor_id:currentDoctorId, name, phone,
-        age: age ? parseInt(age) : null, gender, source:'سكرتيرة', complaint,
-        visits:[], created_at:now, booking_status:'confirmed' };
-      const patEnc = await encryptPatient(patPlain);
+      // encrypt patient
+      var patPlain = {id:patId, name:name, phone:phone, age:age?parseInt(age):null,
+        gender:gender, source:'سكرتيرة', complaint:complaint, history:'', visits:[], color:'', createdAt:nowStr};
+      var patEnc = await encryptPatient(patPlain);
 
-      const { error: patErr } = await db.from('patients').insert({
-        id: patId, doctor_id: currentDoctorId,
-        name: patEnc.name, phone: patEnc.phone, age: patEnc.age,
-        gender: patEnc.gender, source: patEnc.source, complaint: patEnc.complaint,
-        visits: JSON.stringify([]), created_at: now, booking_status: 'confirmed'
+      var patRes = await db.from('patients').insert({
+        id:patId, doctor_id:currentDoctorId,
+        name:patEnc.name, phone:patEnc.phone, age:patEnc.age||null,
+        gender:patEnc.gender, source:'سكرتيرة', complaint:patEnc.complaint,
+        history:patEnc.history, visits:JSON.stringify([]),
+        created_at:nowStr
       });
-      if (patErr) { showToast('❌ خطأ في حفظ المريض: ' + patErr.message); return; }
+      if (patRes.error) { showToast('❌ خطأ في حفظ المريض: '+patRes.error.message); return; }
 
-      // encrypt & save appointment
-      const apptPlain = { id:apptId, doctor_id:currentDoctorId, pat_id:patId, pat_name:name,
-        date:todayStr, time, type:'كشف', payment: paid?'paid':'pending', status:'confirmed',
-        source:'سكرتيرة', complaint, pay_confirmed:paid,
-        pay_amount: paid?amount:0, pay_method: paid?method:null, created_at:now };
-      const apptEnc = await encryptAppointment(apptPlain);
+      // encrypt appointment
+      var apptPlain = {id:apptId, patId:patId, patName:name, date:todayStr, time:time,
+        type:'كشف', payment:paid?'paid':'pending', status:'confirmed', source:'سكرتيرة',
+        complaint:complaint, notes:'', payConfirmed:paid, payAmount:paid?amount:0, payMethod:paid?method:null, createdAt:nowStr};
+      var apptEnc = await encryptAppointment(apptPlain);
 
-      const { error: apptErr } = await db.from('appointments').insert({
-        id: apptId, doctor_id: currentDoctorId, pat_id: patId, pat_name: name,
-        date: todayStr, time, type:'كشف', payment: paid?'paid':'pending',
-        status:'confirmed', source:'سكرتيرة', complaint: apptEnc.complaint,
-        pay_confirmed: paid, pay_amount: paid?amount:0, pay_method: paid?method:null,
-        created_at: now
+      var apptRes = await db.from('appointments').insert({
+        id:apptId, doctor_id:currentDoctorId, pat_id:patId, pat_name:name,
+        date:todayStr, time:time, type:'كشف', payment:paid?'paid':'pending',
+        status:'confirmed', source:'سكرتيرة', complaint:apptEnc.complaint, notes:apptEnc.notes||null,
+        pay_confirmed:paid, pay_amount:paid?amount:0, pay_method:paid?method:null, created_at:nowStr
       });
-      if (apptErr) { showToast('❌ خطأ في حفظ الموعد: ' + apptErr.message); return; }
+      if (apptRes.error) { showToast('❌ خطأ في حفظ الموعد: '+apptRes.error.message); return; }
 
-      DB.patients.push({ ...patPlain });
-      DB.appointments.push({ ...apptPlain, patName:name, patId, payConfirmed:paid, payAmount:paid?amount:0, payMethod:paid?method:null });
+      DB.patients.push(Object.assign({},patPlain,{visits:[]}));
+      DB.appointments.push(apptPlain);
 
       closeSecAdd();
       renderSecList();
-      showToast('✅ تم تسجيل ' + name);
+      showToast('✅ تم تسجيل '+name);
     }
 
-    // ---- Pay ----
-    let _secPayId = null;
+    var _secPayId = null;
     function openSecPay(apptId, name) {
       _secPayId = apptId;
-      document.getElementById('secPayName').textContent = '👤 ' + name;
-      document.getElementById('spay_amount').value = DB.doctor.price || '';
+      document.getElementById('secPayName').textContent = '👤 '+name;
+      document.getElementById('spay_amount').value = (DB.doctor&&DB.doctor.price)||'';
       document.getElementById('secPayModal').style.display = 'flex';
     }
-    function closeSecPay() { document.getElementById('secPayModal').style.display = 'none'; _secPayId = null; }
+    function closeSecPay() { document.getElementById('secPayModal').style.display='none'; _secPayId=null; }
 
     async function confirmSecPay() {
       if (!_secPayId) return;
-      const amount = parseInt(document.getElementById('spay_amount').value) || 0;
-      const method = document.getElementById('spay_method').value;
-
-      const { error } = await db.from('appointments')
-        .update({ pay_confirmed:true, pay_amount:amount, pay_method:method, payment:'paid' })
-        .eq('id', _secPayId);
-      if (error) { showToast('❌ ' + error.message); return; }
-
-      const idx = DB.appointments.findIndex(x => x.id === _secPayId);
-      if (idx !== -1) Object.assign(DB.appointments[idx], { payConfirmed:true, payAmount:amount, payMethod:method });
-
+      var amount = parseInt(document.getElementById('spay_amount').value)||0;
+      var method = document.getElementById('spay_method').value;
+      var res = await db.from('appointments')
+        .update({pay_confirmed:true, pay_amount:amount, pay_method:method, payment:'paid'})
+        .eq('id',_secPayId);
+      if (res.error) { showToast('❌ '+res.error.message); return; }
+      var idx = DB.appointments.findIndex(function(x){ return x.id===_secPayId; });
+      if (idx!==-1) Object.assign(DB.appointments[idx],{payConfirmed:true,payAmount:amount,payMethod:method});
       closeSecPay();
       renderSecList();
       showToast('✅ تم تسجيل الدفع');
+    }
+
+    // ================================================================
+    // DELETE PATIENT — for doctor too
+    // ================================================================
+    async function deletePatient(patId) {
+      if (!confirm('هتحذف البيشنت ده وكل بياناته؟ لا يمكن التراجع')) return;
+      var aptErr = (await db.from('appointments').delete().eq('pat_id', patId)).error;
+      var rxErr  = (await db.from('prescriptions').delete().eq('pat_id', patId)).error;
+      var patErr = (await db.from('patients').delete().eq('id', patId)).error;
+      if (patErr) { showToast('❌ خطأ في الحذف: '+patErr.message); return; }
+      DB.patients     = DB.patients.filter(function(p){ return p.id!==patId; });
+      DB.appointments = DB.appointments.filter(function(a){ return (a.patId||a.pat_id)!==patId; });
+      DB.prescriptions= DB.prescriptions.filter(function(r){ return (r.patId||r.pat_id)!==patId; });
+      realtimeUpdate();
+      showToast('🗑 تم حذف البيشنت');
     }
 
     </script>
