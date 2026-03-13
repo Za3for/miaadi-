@@ -2008,7 +2008,7 @@
           <span>تسجيل الدخول</span> →
         </button>
         <div class="auth-link">
-          مش عندك حساب؟ <a onclick="showRegister()">إنشاء حساب جديد</a>
+          مش عندك حساب؟ <a onclick="showRegister()">دكتور جديد</a> · <a onclick="showSecReg()">سكرتيرة</a>
         </div>
       </div>
 
@@ -2121,10 +2121,189 @@
           </div>
         </div>
       </div>
+      <!-- SECRETARY REGISTER FORM -->
+      <div id="secRegForm" class="auth-card" style="display:none">
+        <div class="auth-title">حساب سكرتيرة 🗂️</div>
+        <div class="auth-sub">سجّلي بكود الدعوة من الدكتور</div>
+        <div class="form-group">
+          <div class="form-label">الاسم الكامل</div>
+          <input class="form-input" id="secName" placeholder="اسمك الكامل">
+        </div>
+        <div class="form-group">
+          <div class="form-label">اسم المستخدم</div>
+          <input class="form-input" id="secUser" placeholder="username">
+          <div class="field-error" id="secUserError">اسم المستخدم مستخدم قبل كده</div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">كلمة المرور</div>
+          <div class="password-wrap">
+            <input class="form-input" id="secPass" type="password" placeholder="••••••••">
+            <button class="pass-toggle" onclick="togglePass('secPass',this)">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">كود الدعوة (من الدكتور)</div>
+          <input class="form-input" id="secCode" placeholder="XXXXXX" maxlength="6"
+            style="letter-spacing:6px;font-size:20px;font-weight:700;text-align:center">
+          <div class="field-error" id="secCodeError">الكود غلط أو منتهي الصلاحية</div>
+        </div>
+        <button class="btn btn-primary" onclick="doSecRegister()">✅ إنشاء الحساب</button>
+        <div class="auth-link">عندك حساب؟ <a onclick="showLogin()">سجّل دخول</a></div>
+      </div>
+
     </div>
   </div>
 
-  <!-- =================== APP =================== -->
+  <!-- ===== SECRETARY SCREEN ===== -->
+  <div id="secScreen" style="display:none;min-height:100vh;background:var(--bg);font-family:'Cairo',sans-serif;direction:rtl">
+
+    <!-- Top Bar -->
+    <div style="background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:20px;font-weight:900;color:var(--accent)">ميعادي</div>
+        <div style="background:rgba(0,212,255,0.15);color:var(--accent);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700">🗂️ سكرتيرة</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="secDoctorBadge" style="font-size:12px;color:var(--text2)"></div>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()">خروج 🚪</button>
+      </div>
+    </div>
+
+    <div style="max-width:860px;margin:0 auto;padding:20px 16px">
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+        <div class="card" style="text-align:center;padding:18px 10px">
+          <div style="font-size:30px;font-weight:900;color:var(--accent)" id="secStatToday">0</div>
+          <div style="font-size:12px;color:var(--text2)">مريض اليوم</div>
+        </div>
+        <div class="card" style="text-align:center;padding:18px 10px">
+          <div style="font-size:30px;font-weight:900;color:#f59e0b" id="secStatWaiting">0</div>
+          <div style="font-size:12px;color:var(--text2)">لم يدفع</div>
+        </div>
+        <div class="card" style="text-align:center;padding:18px 10px">
+          <div style="font-size:30px;font-weight:900;color:#10b981" id="secStatPaid">0</div>
+          <div style="font-size:12px;color:var(--text2)">دفع ✅</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:10px;margin-bottom:20px">
+        <button class="btn btn-primary" style="flex:1;font-size:15px;padding:14px" onclick="openSecAdd()">➕ تسجيل مريض جديد</button>
+        <button class="btn btn-ghost" style="padding:14px 18px" onclick="secRefresh()">🔄</button>
+      </div>
+
+      <!-- Queue -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin:0">قائمة اليوم 📋</div>
+          <div id="secTodayDate" style="font-size:12px;color:var(--text2)"></div>
+        </div>
+        <div id="secPatList"><div style="text-align:center;padding:40px;color:var(--text2)">لا يوجد مرضى مسجلين اليوم</div></div>
+      </div>
+    </div>
+
+    <!-- Add Patient Modal -->
+    <div class="modal-overlay" id="secAddModal" style="display:none">
+      <div class="modal" style="max-width:520px">
+        <div class="modal-head">
+          <div><div class="modal-title">➕ تسجيل مريض جديد</div><div class="modal-sub">بيانات الاستقبال والدفع</div></div>
+          <button class="modal-close" onclick="closeSecAdd()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <div class="form-label">الاسم الكامل *</div>
+              <input class="form-input" id="sadd_name" placeholder="اسم المريض">
+            </div>
+            <div class="form-group">
+              <div class="form-label">رقم الهاتف *</div>
+              <input class="form-input" id="sadd_phone" placeholder="01XXXXXXXXX" type="tel">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <div class="form-label">السن</div>
+              <input class="form-input" id="sadd_age" placeholder="السن" type="number" min="1" max="120">
+            </div>
+            <div class="form-group">
+              <div class="form-label">النوع</div>
+              <select class="form-select" id="sadd_gender">
+                <option value="ذكر">ذكر</option>
+                <option value="أنثى">أنثى</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">الشكوى</div>
+            <input class="form-input" id="sadd_complaint" placeholder="الشكوى الرئيسية...">
+          </div>
+          <div class="form-group">
+            <div class="form-label">وقت الموعد</div>
+            <input class="form-input" id="sadd_time" type="time">
+          </div>
+          <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-top:4px;border:1px solid var(--border)">
+            <div style="font-size:13px;font-weight:700;margin-bottom:12px">💰 الدفع</div>
+            <div class="form-row">
+              <div class="form-group">
+                <div class="form-label">المبلغ (جنيه)</div>
+                <input class="form-input" id="sadd_amount" type="number" placeholder="0">
+              </div>
+              <div class="form-group">
+                <div class="form-label">طريقة الدفع</div>
+                <select class="form-select" id="sadd_method">
+                  <option value="cash">كاش 💵</option>
+                  <option value="card">كارت 💳</option>
+                  <option value="transfer">تحويل 📲</option>
+                  <option value="none">لم يدفع بعد</option>
+                </select>
+              </div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
+              <input type="checkbox" id="sadd_paid" style="width:16px;height:16px;accent-color:var(--accent)">
+              <span style="font-size:13px">✅ تأكيد استلام المبلغ</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" onclick="closeSecAdd()">إلغاء</button>
+          <button class="btn btn-primary" onclick="saveSecPatient()">✅ تسجيل</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pay Modal -->
+    <div class="modal-overlay" id="secPayModal" style="display:none">
+      <div class="modal" style="max-width:380px">
+        <div class="modal-head">
+          <div><div class="modal-title">💰 تسجيل الدفع</div></div>
+          <button class="modal-close" onclick="closeSecPay()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div id="secPayName" style="font-size:15px;font-weight:700;margin-bottom:16px;color:var(--text)"></div>
+          <div class="form-row">
+            <div class="form-group">
+              <div class="form-label">المبلغ (جنيه)</div>
+              <input class="form-input" id="spay_amount" type="number">
+            </div>
+            <div class="form-group">
+              <div class="form-label">طريقة الدفع</div>
+              <select class="form-select" id="spay_method">
+                <option value="cash">كاش 💵</option>
+                <option value="card">كارت 💳</option>
+                <option value="transfer">تحويل 📲</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" onclick="closeSecPay()">إلغاء</button>
+          <button class="btn btn-primary" onclick="confirmSecPay()">✅ تأكيد الدفع</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="appScreen">
 
     <!-- SIDEBAR -->
@@ -2426,6 +2605,7 @@
           <div class="tab-bar">
             <button class="tab-btn active" onclick="showStab('profile',this)">الملف الشخصي</button>
             <button class="tab-btn" onclick="showStab('clinic',this)">العيادة</button>
+            <button class="tab-btn" onclick="showStab('staff',this)">الطاقم</button>
             <button class="tab-btn" onclick="showStab('account',this)">الحساب</button>
             <button class="tab-btn" onclick="showStab('security',this)">الأمان</button>
           </div>
@@ -2469,7 +2649,23 @@
               </div>
             </div>
           </div>
-          <div id="stab_account" style="display:none">
+          <div id="stab_staff" style="display:none">
+            <div class="card" id="staffCard" style="display:none">
+              <!-- for secretary: show which doctor they work for -->
+              <div class="card-title">عيادتك</div>
+              <div id="staffDoctorInfo" style="padding:12px 0;color:var(--text2);font-size:14px"></div>
+            </div>
+            <div class="card" id="doctorStaffCard">
+              <div class="card-title">إدارة الطاقم 👥</div>
+              <div id="staffList" style="margin-bottom:16px"></div>
+              <div style="background:var(--surface2);border-radius:12px;padding:16px">
+                <div style="font-size:13px;font-weight:600;margin-bottom:10px">إضافة سكرتيرة جديدة</div>
+                <div id="inviteBox">
+                  <button class="btn btn-primary btn-sm" onclick="generateInvite()">🔑 إنشاء كود دعوة</button>
+                </div>
+              </div>
+            </div>
+          </div>
             <div class="card">
               <div class="card-title">تغيير كلمة المرور</div>
               <div class="form-group">
@@ -2846,8 +3042,14 @@
     async function decryptAppointment(a) {
       return {
         ...a,
-        complaint: await decryptText(a.complaint),
-        notes: await decryptText(a.notes)
+        patId:        a.pat_id      || a.patId,
+        patName:      a.pat_name    || a.patName,
+        createdAt:    a.created_at  || a.createdAt,
+        payConfirmed: a.pay_confirmed || false,
+        payAmount:    a.pay_amount    || 0,
+        payMethod:    a.pay_method    || null,
+        complaint:    await decryptText(a.complaint),
+        notes:        await decryptText(a.notes)
       };
     }
 
@@ -2927,18 +3129,28 @@
     // ================================================
     let currentUser = null;
     let currentDoctorId = null;
-    let regData = {};
+    let currentRole = 'doctor'; // 'doctor' or 'secretary'
 
+    // ================================================
+    // AUTH SCREENS
+    // ================================================
     function showLogin() {
       document.getElementById('loginForm').style.display = '';
       document.getElementById('registerForm').style.display = 'none';
-      document.getElementById('loginError').classList.remove('show');
+      document.getElementById('secRegForm').style.display = 'none';
     }
     function showRegister() {
       document.getElementById('loginForm').style.display = 'none';
       document.getElementById('registerForm').style.display = '';
-      showRegStep(1);
+      document.getElementById('secRegForm').style.display = 'none';
     }
+    function showSecReg() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('secRegForm').style.display = '';
+    }
+    let regData = {};
+
     function showRegStep(n) {
       [1, 2, 3].forEach(i => {
         document.getElementById('reg_step' + i).style.display = i === n ? '' : 'none';
@@ -3118,11 +3330,14 @@
         }
       }
 
-      const email = user + '@gmail.com';
       let data, error;
       try {
-        const res = await db.auth.signInWithPassword({ email, password: pass });
-        data = res.data; error = res.error;
+        const r1 = await db.auth.signInWithPassword({ email: user + '@gmail.com', password: pass });
+        if (!r1.error) { data = r1.data; error = null; }
+        else {
+          const r2 = await db.auth.signInWithPassword({ email: user + '@miaadi.sec', password: pass });
+          data = r2.data; error = r2.error;
+        }
       } catch (fetchErr) {
         showToast('❌ تعذّر الاتصال بالسيرفر — تحقق من الإنترنت');
         err.textContent = 'لا يوجد اتصال بالإنترنت'; err.classList.add('show');
@@ -3150,28 +3365,43 @@
         return;
       }
 
-      // مسح المحاولات بعد الدخول الصح
+      currentUser = user;
       localStorage.removeItem(attemptsKey);
       localStorage.removeItem(blockKey);
       stopCountdown();
 
-      currentUser = user;
-      currentDoctorId = data.user.id;
-      localStorage.setItem('miaadi_session', JSON.stringify({ user, doctorId: data.user.id }));
+      // هل ده دكتور ولا سكرتيرة؟
+      const userId = data.user.id;
+      let staffRow = null;
+      try {
+        const { data: sr, error: srErr } = await db.from('staff').select('*').eq('user_id', userId).maybeSingle();
+        if (!srErr) staffRow = sr;
+      } catch(e) { staffRow = null; }
 
-      // اشتقاق مفتاح التشفير من كلمة المرور
-      encKey = await deriveKey(pass, data.user.id);
+      if (staffRow) {
+        // سكرتيرة
+        currentRole = 'secretary';
+        currentDoctorId = staffRow.doctor_id;
+        localStorage.setItem('miaadi_session', JSON.stringify({ user, doctorId: staffRow.doctor_id, role: 'secretary', userId }));
+        encKey = await deriveKey(pass, staffRow.doctor_id);
+      } else {
+        // دكتور
+        currentRole = 'doctor';
+        currentDoctorId = userId;
+        localStorage.setItem('miaadi_session', JSON.stringify({ user, doctorId: userId, role: 'doctor' }));
+        encKey = await deriveKey(pass, userId);
+      }
 
       await loadDoctorData();
       bootApp();
-      showToast('👋 مرحباً بعودتك ' + DB.doctor.name);
+      showToast('👋 مرحباً بعودتك ' + (currentRole === 'secretary' ? user : DB.doctor.name));
     }
 
     function doLogout() {
       stopRealtime(); if (!confirm('هتسجل خروج؟')) return;
       db.auth.signOut();
       localStorage.removeItem('miaadi_session');
-      currentUser = null; currentDoctorId = null; encKey = null;
+      currentUser = null; currentDoctorId = null; encKey = null; currentRole = 'doctor';
       document.getElementById('authScreen').classList.remove('hidden');
       document.getElementById('appScreen').classList.remove('active');
       showLogin();
@@ -3179,14 +3409,148 @@
       document.getElementById('loginPass').value = '';
     }
 
+    // ================================================
+    // SECRETARY REGISTER
+    // ================================================
+    async function doSecRegister() {
+      const name = document.getElementById('secName').value.trim();
+      const user = document.getElementById('secUser').value.trim().toLowerCase();
+      const pass = document.getElementById('secPass').value;
+      const code = document.getElementById('secCode').value.trim().toUpperCase();
+      const codeErr = document.getElementById('secCodeError');
+      const userErr = document.getElementById('secUserError');
+      codeErr.classList.remove('show');
+      userErr.classList.remove('show');
+
+      if (!name) { showToast('⚠️ اكتبي اسمك'); return; }
+      if (!user) { showToast('⚠️ اكتبي اسم المستخدم'); return; }
+      if (pass.length < 6) { showToast('⚠️ كلمة المرور 6 أحرف على الأقل'); return; }
+      if (code.length !== 6) { showToast('⚠️ الكود 6 أرقام'); return; }
+
+      // تحقق من الكود
+      const { data: invite, error: invErr } = await db.from('invite_codes')
+        .select('*').eq('code', code).eq('used', false).single();
+
+      if (invErr || !invite) { codeErr.classList.add('show'); return; }
+      if (new Date(invite.expires_at) < new Date()) {
+        codeErr.textContent = 'الكود منتهي الصلاحية'; codeErr.classList.add('show'); return;
+      }
+
+      // إنشاء حساب في Supabase Auth
+      const email = user + '@gmail.com';
+      let regData, regError;
+      try {
+        const res = await db.auth.signUp({ email, password: pass });
+        regData = res.data; regError = res.error;
+      } catch (e) { showToast('❌ خطأ في الاتصال'); return; }
+
+      if (regError) {
+        console.error('signUp error:', regError);
+        if (regError.message.includes('already') || regError.message.includes('registered')) {
+          userErr.classList.add('show');
+        } else {
+          showToast('⚠️ ' + regError.message);
+        }
+        return;
+      }
+      if (!regData?.user?.id) {
+        showToast('⚠️ تحقق من الـ email confirmation في Supabase — تأكد إن Email confirmation معطّل');
+        return;
+      }
+
+      const userId = regData.user.id;
+
+      // تسجيل في جدول staff
+      await db.from('staff').insert({
+        doctor_id: invite.doctor_id,
+        user_id: userId,
+        username: user,
+        name: name,
+        role: 'secretary'
+      });
+
+      // تعليم الكود كمستخدم
+      await db.from('invite_codes').update({ used: true }).eq('id', invite.id);
+
+      showToast('✅ تم إنشاء الحساب! سجّلي دخولك دلوقتي');
+      showLogin();
+    }
+
+    // ================================================
+    // INVITE CODE — للدكتور
+    // ================================================
+    async function generateInvite() {
+      // كود 6 أرقام وأحرف واضحة (بدون 0,O,I,1 عشان تلتبسش)
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+      const { error } = await db.from('invite_codes').insert({
+        doctor_id: currentDoctorId,
+        code,
+        expires_at: expiresAt,
+        used: false
+      });
+
+      if (error) { showToast('❌ خطأ: ' + error.message); console.error(error); return; }
+
+      const box = document.getElementById('inviteBox');
+      box.innerHTML = `
+        <div style="text-align:center;padding:16px;background:var(--surface);border-radius:10px;border:2px dashed var(--accent)">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">كود الدعوة — صالح 24 ساعة</div>
+          <div style="font-size:32px;font-weight:900;letter-spacing:8px;color:var(--accent)">${code}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">ابعته للسكرتيرة عشان تسجل بيه</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px" onclick="generateInvite()">🔄 كود جديد</button>`;
+    }
+
+    async function loadStaff() {
+      if (currentRole === 'secretary') {
+        // السكرتيرة تشوف بيانات الدكتور اللي بتشتغل معاه
+        document.getElementById('staffCard').style.display = '';
+        document.getElementById('doctorStaffCard').style.display = 'none';
+        document.getElementById('staffDoctorInfo').innerHTML =
+          `<strong>${DB.doctor.name}</strong><br>
+           <span style="color:var(--muted)">${DB.doctor.spec || ''} — ${DB.doctor.clinic || ''}</span>`;
+        return;
+      }
+      // الدكتور يشوف الطاقم بتاعه
+      document.getElementById('staffCard').style.display = 'none';
+      document.getElementById('doctorStaffCard').style.display = '';
+      const { data: staff } = await db.from('staff').select('*').eq('doctor_id', currentDoctorId);
+      const list = staff || [];
+      const el = document.getElementById('staffList');
+      if (!list.length) {
+        el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0">لا يوجد طاقم مضاف بعد</div>`;
+        return;
+      }
+      el.innerHTML = list.map(s => `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div class="av av-sm" style="background:var(--accent)">${s.name.charAt(0)}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">${s.name}</div>
+            <div style="font-size:11px;color:var(--muted)">@${s.username} · سكرتيرة</div>
+          </div>
+          <button class="ib ib-red" title="إزالة" onclick="removeStaff('${s.id}','${s.name}')">✕</button>
+        </div>`).join('');
+    }
+
+    async function removeStaff(staffId, name) {
+      if (!confirm('هتشيل ' + name + ' من الطاقم؟')) return;
+      const { error } = await db.from('staff').delete().eq('id', staffId);
+      if (error) { showToast('❌ خطأ'); return; }
+      showToast('✅ تم إزالة ' + name);
+      loadStaff();
+    }
+
     async function checkSession() {
       const s = localStorage.getItem('miaadi_session');
       if (!s) return false;
-      const { user, doctorId } = JSON.parse(s);
+      const { user, doctorId, role } = JSON.parse(s);
       try {
         const { data, error } = await db.auth.getSession();
         if (error || !data.session) {
-          // جرب تعمل refresh
           const { data: refreshData, error: refreshError } = await db.auth.refreshSession();
           if (refreshError || !refreshData.session) {
             localStorage.removeItem('miaadi_session');
@@ -3195,6 +3559,7 @@
         }
         currentUser = user;
         currentDoctorId = doctorId;
+        currentRole = role || 'doctor';
         await loadDoctorData();
         return true;
       } catch (e) {
@@ -3210,28 +3575,21 @@
         if (doc) DB.doctor = { ...doc };
 
         const { data: pats } = await db.from('patients').select('*').eq('doctor_id', currentDoctorId);
-        DB.patients = await Promise.all((pats || []).map(async p => {
-          const dec = await decryptPatient(p);
-          return { ...dec, createdAt: p.created_at };
-        }));
+        DB.patients = await Promise.all((pats || []).map(decryptPatient));
 
         const { data: apts } = await db.from('appointments').select('*').eq('doctor_id', currentDoctorId);
-        DB.appointments = await Promise.all((apts || []).map(async a => {
-          const dec = await decryptAppointment(a);
-          return { ...dec, patId: a.pat_id || a.patId, patName: a.pat_name || a.patName, createdAt: a.created_at };
-        }));
+        DB.appointments = await Promise.all((apts || []).map(decryptAppointment));
 
         const { data: reqs } = await db.from('requests').select('*').eq('doctor_id', currentDoctorId);
-        DB.requests = (reqs || []).map(r => ({ ...r, createdAt: r.created_at }));
+        DB.requests = reqs || [];
 
         const { data: rxs } = await db.from('prescriptions').select('*').eq('doctor_id', currentDoctorId);
-        DB.prescriptions = await Promise.all((rxs || []).map(async rx => {
-          const dec = await decryptPrescription(rx);
-          return { ...dec, patId: rx.pat_id || rx.patId, patName: rx.pat_name || rx.patName, createdAt: rx.created_at };
-        }));
+        DB.prescriptions = await Promise.all((rxs || []).map(decryptPrescription));
 
-        const { data: notifs } = await db.from('notifications').select('*').eq('doctor_id', currentDoctorId);
-        DB.notifications = (notifs || []).map(n => ({ ...n, time: n.created_at || n.time }));
+        if (currentRole !== 'secretary') {
+          const { data: notifs } = await db.from('notifications').select('*').eq('doctor_id', currentDoctorId);
+          DB.notifications = notifs || [];
+        }
       } catch (e) {
         console.error('❌ loadDoctorData failed:', e);
         showToast('❌ خطأ في تحميل البيانات — تحقق من الإنترنت');
@@ -3243,90 +3601,51 @@
       if (!currentDoctorId) return;
       markLocalSave();
       try {
-        // حفظ البيشنتس — explicit columns فقط
+        // حفظ البيشنتس (مشفرة)
         for (const p of DB.patients) {
           const enc = await encryptPatient(p);
-          const { error } = await db.from('patients').upsert({
-            id: p.id,
-            doctor_id: currentDoctorId,
-            name: p.name,
-            phone: p.phone,
-            age: p.age,
-            gender: p.gender,
-            source: p.source,
-            color: p.color,
-            complaint: enc.complaint,
-            history: enc.history,
-            visits: enc.visits,
-            created_at: p.createdAt || new Date().toISOString()
-          }, { onConflict: 'id' });
+          const { error } = await db.from('patients').upsert(
+            { ...enc, doctor_id: currentDoctorId },
+            { onConflict: 'id' }
+          );
           if (error) console.error('Error saving patient:', error);
         }
 
-        // حفظ المواعيد — explicit columns فقط
+        // حفظ المواعيد (مشفرة)
         for (const a of DB.appointments) {
           const enc = await encryptAppointment(a);
-          const { error } = await db.from('appointments').upsert({
-            id: a.id,
-            doctor_id: currentDoctorId,
-            pat_id: a.patId,
-            pat_name: a.patName,
-            date: a.date,
-            time: a.time,
-            type: a.type,
-            payment: a.payment,
-            status: a.status,
-            source: a.source,
-            complaint: enc.complaint,
-            notes: enc.notes,
-            created_at: a.createdAt || new Date().toISOString()
-          }, { onConflict: 'id' });
+          const { error } = await db.from('appointments').upsert(
+            { ...enc, doctor_id: currentDoctorId },
+            { onConflict: 'id' }
+          );
           if (error) console.error('Error saving appointment:', error);
         }
 
-        // حفظ الطلبات — explicit columns فقط
+        // حفظ الطلبات
         for (const r of DB.requests) {
-          const { error } = await db.from('requests').upsert({
-            id: r.id,
-            doctor_id: currentDoctorId,
-            name: r.name,
-            phone: r.phone,
-            date: r.date,
-            time: r.time,
-            type: r.type,
-            status: r.status,
-            source: r.source,
-            notes: r.notes || null,
-            created_at: r.createdAt || new Date().toISOString()
-          }, { onConflict: 'id' });
+          const { error } = await db.from('requests').upsert(
+            { ...r, doctor_id: currentDoctorId },
+            { onConflict: 'id' }
+          );
           if (error) console.error('Error saving request:', error);
         }
 
-        // حفظ الروشتات — explicit columns فقط
+        // حفظ الروشتات (مشفرة)
         for (const rx of DB.prescriptions) {
           const enc = await encryptPrescription(rx);
-          const { error } = await db.from('prescriptions').upsert({
-            id: rx.id,
-            doctor_id: currentDoctorId,
-            pat_id: rx.patId,
-            pat_name: rx.patName,
-            date: rx.date,
-            notes: enc.notes,
-            drugs: enc.drugs,
-            created_at: rx.createdAt || new Date().toISOString()
-          }, { onConflict: 'id' });
+          const { error } = await db.from('prescriptions').upsert(
+            { ...enc, doctor_id: currentDoctorId },
+            { onConflict: 'id' }
+          );
           if (error) console.error('Error saving prescription:', error);
         }
 
-        // حفظ الإشعارات — explicit columns فقط
+        // حفظ الإشعارات
         for (const n of DB.notifications) {
-          const { error } = await db.from('notifications').upsert({
-            id: n.id,
-            doctor_id: currentDoctorId,
-            text: n.text,
-            read: n.read,
-            created_at: n.time || new Date().toISOString()
-          }, { onConflict: 'id' });
+          const { error } = await db.from('notifications').upsert(
+            { ...n, doctor_id: currentDoctorId },
+            { onConflict: 'id' }
+          );
           if (error) console.error('Error saving notification:', error);
         }
 
@@ -3393,12 +3712,9 @@
         }, async (payload) => {
           if (localSaveInProgress) return;
           const { data: apts } = await db.from('appointments').select('*').eq('doctor_id', currentDoctorId);
-          DB.appointments = await Promise.all((apts || []).map(async a => {
-            const dec = await decryptAppointment(a);
-            return { ...dec, patId: a.pat_id || a.patId, patName: a.pat_name || a.patName, createdAt: a.created_at };
-          }));
-          realtimeUpdate();
-          showToast('🔄 تحديث مواعيد من جهاز آخر');
+          DB.appointments = await Promise.all((apts || []).map(decryptAppointment));
+          if (currentRole === 'secretary') renderSecList();
+          else { realtimeUpdate(); showToast('🔄 تحديث مواعيد من جهاز آخر'); }
         })
         .on('postgres_changes', {
           event: '*', schema: 'public', table: 'patients',
@@ -3406,12 +3722,9 @@
         }, async (payload) => {
           if (localSaveInProgress) return;
           const { data: pats } = await db.from('patients').select('*').eq('doctor_id', currentDoctorId);
-          DB.patients = await Promise.all((pats || []).map(async p => {
-            const dec = await decryptPatient(p);
-            return { ...dec, createdAt: p.created_at };
-          }));
-          realtimeUpdate();
-          showToast('🔄 تحديث بيشنتس من جهاز آخر');
+          DB.patients = await Promise.all((pats || []).map(decryptPatient));
+          if (currentRole === 'secretary') renderSecList();
+          else { realtimeUpdate(); showToast('🔄 تحديث بيانات'); }
         })
         .on('postgres_changes', {
           event: '*', schema: 'public', table: 'requests',
@@ -3463,8 +3776,10 @@
 
     function bootApp() {
       document.getElementById('authScreen').classList.add('hidden');
-      document.getElementById('appScreen').classList.add('active');
       startRealtime();
+      if (currentRole === 'secretary') { bootSecApp(); return; }
+      document.getElementById('appScreen').classList.add('active');
+      applyRoleUI();
       // Populate settings
       const d = DB.doctor;
       document.getElementById('set_name').value = d.name || '';
@@ -3479,6 +3794,27 @@
       renderDashboard();
       updateBadges();
       renderNotifs();
+    }
+
+    function applyRoleUI() {
+      const isSec = currentRole === 'secretary';
+      // السكرتيرة مش بتشوف زرار إضافة بيشنت والإعدادات الخاصة بالدكتور
+      const hideForSec = ['nav_settings'];
+      hideForSec.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = isSec ? 'none' : '';
+      });
+      // السكرتيرة تشوف بادج role في السايدبار
+      if (isSec) {
+        const roleTag = document.createElement('div');
+        roleTag.style.cssText = 'font-size:10px;background:rgba(0,212,255,0.15);color:var(--accent);padding:2px 8px;border-radius:20px;margin-top:3px;width:fit-content';
+        roleTag.textContent = '🗂️ سكرتيرة';
+        roleTag.id = 'roleTag';
+        const sideSpec = document.getElementById('sideSpec');
+        if (sideSpec && !document.getElementById('roleTag')) {
+          sideSpec.parentNode.insertBefore(roleTag, sideSpec.nextSibling);
+        }
+      }
     }
 
     function updateSidebar() {
@@ -3522,7 +3858,7 @@
     // ================================================
     function renderDashboard() {
       const d = DB.doctor;
-      document.getElementById('dashSub').textContent = `مرحباً ${d.name} — ${fmtDate(today())}`;
+      document.getElementById('dashSub').textContent = `مرحباً ${d.name || ''} — ${fmtDate(today())}`;
 
       const total = DB.appointments.length;
       const todayA = DB.appointments.filter(a => a.date === today());
@@ -4297,11 +4633,13 @@
     // SETTINGS
     // ================================================
     function showStab(name, el) {
-      ['profile', 'clinic', 'account', 'security'].forEach(t => {
-        document.getElementById('stab_' + t).style.display = t === name ? '' : 'none';
+      ['profile', 'clinic', 'staff', 'account', 'security'].forEach(t => {
+        const el2 = document.getElementById('stab_' + t);
+        if (el2) el2.style.display = t === name ? '' : 'none';
       });
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       if (el) el.classList.add('active');
+      if (name === 'staff') loadStaff();
     }
 
     function saveSettings() {
@@ -4621,7 +4959,168 @@
         showLogin();
       }
     };
-  </script>
+  
+    // ================================================================
+    // SECRETARY APP
+    // ================================================================
+
+    function bootSecApp() {
+      document.getElementById('secScreen').style.display = '';
+      document.getElementById('appScreen').style.display = 'none';
+      const d = DB.doctor || {};
+      document.getElementById('secDoctorBadge').textContent = (d.name || '') + (d.clinic ? ' · ' + d.clinic : '');
+      const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+      document.getElementById('secTodayDate').textContent = new Date().toLocaleDateString('ar-EG', opts);
+      renderSecList();
+    }
+
+    function secRefresh() { renderSecList(); showToast('🔄 تم التحديث'); }
+
+    function renderSecList() {
+      var todayStr = new Date().toISOString().slice(0,10);
+      var todayApts = DB.appointments.filter(function(a){ return (a.date||'').slice(0,10) === todayStr; });
+      document.getElementById('secStatToday').textContent   = todayApts.length;
+      document.getElementById('secStatWaiting').textContent = todayApts.filter(function(a){ return !a.payConfirmed; }).length;
+      document.getElementById('secStatPaid').textContent    = todayApts.filter(function(a){ return  a.payConfirmed; }).length;
+
+      var el = document.getElementById('secPatList');
+      if (!todayApts.length) {
+        el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)">لا يوجد مرضى مسجلين اليوم</div>';
+        return;
+      }
+      var sorted = todayApts.slice().sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
+      var methodLabel = { cash:'💵 كاش', card:'💳 كارت', transfer:'📲 تحويل' };
+      var html = '';
+      for (var i = 0; i < sorted.length; i++) {
+        var a    = sorted[i];
+        var paid = a.payConfirmed;
+        var patName  = a.patName || a.pat_name || '—';
+        var timeStr  = a.time ? '⏰ ' + a.time : '';
+        var cmpStr   = a.complaint ? ' · ' + a.complaint : '';
+        var payInfo  = paid ? '<div style="font-size:12px;color:#10b981;margin-top:4px;font-weight:600">' + (methodLabel[a.payMethod]||'💰') + ' ' + (a.payAmount||0) + ' جنيه</div>' : '';
+        var payBtn   = paid
+          ? '<div style="font-size:12px;font-weight:700;color:#10b981;background:rgba(16,185,129,.1);padding:4px 10px;border-radius:20px">✅ دفع</div>'
+          : '<button class="btn btn-primary btn-sm" data-secpay="' + i + '">💰 دفع</button>';
+        html += '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)">'
+          + '<div style="min-width:30px;height:30px;border-radius:50%;background:var(--accent);color:#000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px">' + (i+1) + '</div>'
+          + '<div style="flex:1">'
+          + '<div style="font-weight:700;font-size:15px">' + patName + '</div>'
+          + '<div style="font-size:12px;color:var(--text2);margin-top:2px">' + timeStr + cmpStr + '</div>'
+          + payInfo
+          + '</div>'
+          + '<div>' + payBtn + '</div>'
+          + '</div>';
+      }
+      el.innerHTML = html;
+      // attach pay button events via data attribute (avoids quote escaping issues)
+      el.querySelectorAll('[data-secpay]').forEach(function(btn) {
+        var idx = parseInt(btn.getAttribute('data-secpay'));
+        var apt = sorted[idx];
+        btn.addEventListener('click', function() {
+          openSecPay(apt.id, apt.patName || apt.pat_name || '');
+        });
+      });
+    }
+
+    // ---- Add patient ----
+    function openSecAdd() {
+      document.getElementById('sadd_time').value = new Date().toTimeString().slice(0,5);
+      document.getElementById('sadd_amount').value = DB.doctor.price || '';
+      document.getElementById('sadd_name').value = '';
+      document.getElementById('sadd_phone').value = '';
+      document.getElementById('sadd_age').value = '';
+      document.getElementById('sadd_complaint').value = '';
+      document.getElementById('sadd_paid').checked = false;
+      document.getElementById('secAddModal').style.display = 'flex';
+    }
+    function closeSecAdd() { document.getElementById('secAddModal').style.display = 'none'; }
+
+    async function saveSecPatient() {
+      const name      = document.getElementById('sadd_name').value.trim();
+      const phone     = document.getElementById('sadd_phone').value.trim();
+      const age       = document.getElementById('sadd_age').value;
+      const gender    = document.getElementById('sadd_gender').value;
+      const complaint = document.getElementById('sadd_complaint').value.trim();
+      const time      = document.getElementById('sadd_time').value;
+      const amount    = parseInt(document.getElementById('sadd_amount').value) || 0;
+      const method    = document.getElementById('sadd_method').value;
+      const paid      = document.getElementById('sadd_paid').checked && method !== 'none';
+
+      if (!name)  { showToast('⚠️ اكتب اسم المريض'); return; }
+      if (!phone) { showToast('⚠️ اكتب رقم الهاتف'); return; }
+
+      const todayStr = new Date().toISOString().slice(0,10);
+      const patId    = crypto.randomUUID();
+      const apptId   = crypto.randomUUID();
+      const now      = new Date().toISOString();
+
+      // encrypt & save patient
+      const patPlain = { id:patId, doctor_id:currentDoctorId, name, phone,
+        age: age ? parseInt(age) : null, gender, source:'سكرتيرة', complaint,
+        visits:[], created_at:now, booking_status:'confirmed' };
+      const patEnc = await encryptPatient(patPlain);
+
+      const { error: patErr } = await db.from('patients').insert({
+        id: patId, doctor_id: currentDoctorId,
+        name: patEnc.name, phone: patEnc.phone, age: patEnc.age,
+        gender: patEnc.gender, source: patEnc.source, complaint: patEnc.complaint,
+        visits: JSON.stringify([]), created_at: now, booking_status: 'confirmed'
+      });
+      if (patErr) { showToast('❌ خطأ في حفظ المريض: ' + patErr.message); return; }
+
+      // encrypt & save appointment
+      const apptPlain = { id:apptId, doctor_id:currentDoctorId, pat_id:patId, pat_name:name,
+        date:todayStr, time, type:'كشف', payment: paid?'paid':'pending', status:'confirmed',
+        source:'سكرتيرة', complaint, pay_confirmed:paid,
+        pay_amount: paid?amount:0, pay_method: paid?method:null, created_at:now };
+      const apptEnc = await encryptAppointment(apptPlain);
+
+      const { error: apptErr } = await db.from('appointments').insert({
+        id: apptId, doctor_id: currentDoctorId, pat_id: patId, pat_name: name,
+        date: todayStr, time, type:'كشف', payment: paid?'paid':'pending',
+        status:'confirmed', source:'سكرتيرة', complaint: apptEnc.complaint,
+        pay_confirmed: paid, pay_amount: paid?amount:0, pay_method: paid?method:null,
+        created_at: now
+      });
+      if (apptErr) { showToast('❌ خطأ في حفظ الموعد: ' + apptErr.message); return; }
+
+      DB.patients.push({ ...patPlain });
+      DB.appointments.push({ ...apptPlain, patName:name, patId, payConfirmed:paid, payAmount:paid?amount:0, payMethod:paid?method:null });
+
+      closeSecAdd();
+      renderSecList();
+      showToast('✅ تم تسجيل ' + name);
+    }
+
+    // ---- Pay ----
+    let _secPayId = null;
+    function openSecPay(apptId, name) {
+      _secPayId = apptId;
+      document.getElementById('secPayName').textContent = '👤 ' + name;
+      document.getElementById('spay_amount').value = DB.doctor.price || '';
+      document.getElementById('secPayModal').style.display = 'flex';
+    }
+    function closeSecPay() { document.getElementById('secPayModal').style.display = 'none'; _secPayId = null; }
+
+    async function confirmSecPay() {
+      if (!_secPayId) return;
+      const amount = parseInt(document.getElementById('spay_amount').value) || 0;
+      const method = document.getElementById('spay_method').value;
+
+      const { error } = await db.from('appointments')
+        .update({ pay_confirmed:true, pay_amount:amount, pay_method:method, payment:'paid' })
+        .eq('id', _secPayId);
+      if (error) { showToast('❌ ' + error.message); return; }
+
+      const idx = DB.appointments.findIndex(x => x.id === _secPayId);
+      if (idx !== -1) Object.assign(DB.appointments[idx], { payConfirmed:true, payAmount:amount, payMethod:method });
+
+      closeSecPay();
+      renderSecList();
+      showToast('✅ تم تسجيل الدفع');
+    }
+
+    </script>
 </body>
 
 </html>
