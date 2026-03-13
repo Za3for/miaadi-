@@ -2008,7 +2008,7 @@
           <span>تسجيل الدخول</span> →
         </button>
         <div class="auth-link">
-          مش عندك حساب؟ <a onclick="showRegister()">إنشاء حساب جديد</a>
+          مش عندك حساب؟ <a onclick="showRegister()">دكتور جديد</a> · <a onclick="showSecReg()">سكرتيرة</a>
         </div>
       </div>
 
@@ -2121,10 +2121,38 @@
           </div>
         </div>
       </div>
+      <!-- SECRETARY REGISTER FORM -->
+      <div id="secRegForm" class="auth-card" style="display:none">
+        <div class="auth-title">حساب سكرتيرة 🗂️</div>
+        <div class="auth-sub">سجّلي بكود الدعوة من الدكتور</div>
+        <div class="form-group">
+          <div class="form-label">الاسم الكامل</div>
+          <input class="form-input" id="secName" placeholder="اسمك الكامل">
+        </div>
+        <div class="form-group">
+          <div class="form-label">اسم المستخدم</div>
+          <input class="form-input" id="secUser" placeholder="username">
+          <div class="field-error" id="secUserError">اسم المستخدم مستخدم قبل كده</div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">كلمة المرور</div>
+          <div class="password-wrap">
+            <input class="form-input" id="secPass" type="password" placeholder="••••••••">
+            <button class="pass-toggle" onclick="togglePass('secPass',this)">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">كود الدعوة (من الدكتور)</div>
+          <input class="form-input" id="secCode" placeholder="XXXXXX" maxlength="6"
+            style="letter-spacing:6px;font-size:20px;font-weight:700;text-align:center">
+          <div class="field-error" id="secCodeError">الكود غلط أو منتهي الصلاحية</div>
+        </div>
+        <button class="btn btn-primary" onclick="doSecRegister()">✅ إنشاء الحساب</button>
+        <div class="auth-link">عندك حساب؟ <a onclick="showLogin()">سجّل دخول</a></div>
+      </div>
+
     </div>
   </div>
-
-  <!-- =================== APP =================== -->
   <div id="appScreen">
 
     <!-- SIDEBAR -->
@@ -2426,6 +2454,7 @@
           <div class="tab-bar">
             <button class="tab-btn active" onclick="showStab('profile',this)">الملف الشخصي</button>
             <button class="tab-btn" onclick="showStab('clinic',this)">العيادة</button>
+            <button class="tab-btn" onclick="showStab('staff',this)">الطاقم</button>
             <button class="tab-btn" onclick="showStab('account',this)">الحساب</button>
             <button class="tab-btn" onclick="showStab('security',this)">الأمان</button>
           </div>
@@ -2469,7 +2498,23 @@
               </div>
             </div>
           </div>
-          <div id="stab_account" style="display:none">
+          <div id="stab_staff" style="display:none">
+            <div class="card" id="staffCard" style="display:none">
+              <!-- for secretary: show which doctor they work for -->
+              <div class="card-title">عيادتك</div>
+              <div id="staffDoctorInfo" style="padding:12px 0;color:var(--text2);font-size:14px"></div>
+            </div>
+            <div class="card" id="doctorStaffCard">
+              <div class="card-title">إدارة الطاقم 👥</div>
+              <div id="staffList" style="margin-bottom:16px"></div>
+              <div style="background:var(--surface2);border-radius:12px;padding:16px">
+                <div style="font-size:13px;font-weight:600;margin-bottom:10px">إضافة سكرتيرة جديدة</div>
+                <div id="inviteBox">
+                  <button class="btn btn-primary btn-sm" onclick="generateInvite()">🔑 إنشاء كود دعوة</button>
+                </div>
+              </div>
+            </div>
+          </div>
             <div class="card">
               <div class="card-title">تغيير كلمة المرور</div>
               <div class="form-group">
@@ -2757,7 +2802,16 @@
   <script>
     const SUPABASE_URL = 'https://kgovrncgcngfkygzkxcf.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_0tbQqTpKGC7pVhGy8wCXBA_CstXvyyd';
-    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false
+      },
+      realtime: {
+        params: { eventsPerSecond: 10 }
+      }
+    });
 
     // ============================================
     // ENCRYPTION — AES-256-GCM
@@ -2784,7 +2838,7 @@
         const buf = new Uint8Array(iv.byteLength + encrypted.byteLength);
         buf.set(iv, 0); buf.set(new Uint8Array(encrypted), iv.byteLength);
         return btoa(String.fromCharCode(...buf));
-      } catch(e) { return text; }
+      } catch (e) { return text; }
     }
 
     async function decryptText(text) {
@@ -2795,59 +2849,64 @@
         const data = buf.slice(12);
         const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, encKey, data);
         return new TextDecoder().decode(dec);
-      } catch(e) { return text; }
+      } catch (e) { return text; }
     }
 
     async function encryptPatient(p) {
-      return { ...p,
+      return {
+        ...p,
         complaint: await encryptText(p.complaint),
-        history:   await encryptText(p.history),
-        visits:    await Promise.all((p.visits||[]).map(async v => ({
+        history: await encryptText(p.history),
+        visits: await Promise.all((p.visits || []).map(async v => ({
           ...v,
           complaint: await encryptText(v.complaint),
           diagnosis: await encryptText(v.diagnosis),
-          notes:     await encryptText(v.notes)
+          notes: await encryptText(v.notes)
         })))
       };
     }
 
     async function decryptPatient(p) {
-      return { ...p,
+      return {
+        ...p,
         complaint: await decryptText(p.complaint),
-        history:   await decryptText(p.history),
-        visits:    await Promise.all((p.visits||[]).map(async v => ({
+        history: await decryptText(p.history),
+        visits: await Promise.all((p.visits || []).map(async v => ({
           ...v,
           complaint: await decryptText(v.complaint),
           diagnosis: await decryptText(v.diagnosis),
-          notes:     await decryptText(v.notes)
+          notes: await decryptText(v.notes)
         })))
       };
     }
 
     async function encryptAppointment(a) {
-      return { ...a,
+      return {
+        ...a,
         complaint: await encryptText(a.complaint),
-        notes:     await encryptText(a.notes)
+        notes: await encryptText(a.notes)
       };
     }
 
     async function decryptAppointment(a) {
-      return { ...a,
+      return {
+        ...a,
         complaint: await decryptText(a.complaint),
-        notes:     await decryptText(a.notes)
+        notes: await decryptText(a.notes)
       };
     }
 
     async function encryptPrescription(rx) {
-      return { ...rx,
+      return {
+        ...rx,
         notes: await encryptText(rx.notes),
-        drugs: await encryptText(JSON.stringify(rx.drugs||[]))
+        drugs: await encryptText(JSON.stringify(rx.drugs || []))
       };
     }
 
     async function decryptPrescription(rx) {
       let drugs = rx.drugs;
-      try { drugs = JSON.parse(await decryptText(rx.drugs)); } catch(e) {}
+      try { drugs = JSON.parse(await decryptText(rx.drugs)); } catch (e) { }
       return { ...rx, notes: await decryptText(rx.notes), drugs };
     }
   </script>
@@ -2893,7 +2952,17 @@
       return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
     }
     function fmtTime(iso) { return new Date(iso).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' }); }
-    function genId() { return '#' + (++DB.idCounter).toString().padStart(4, '0'); }
+    // دالة لتوليد معرف فريد عالمي
+    function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function genId() {
+      return generateUUID();
+    }
     function sChip(s) { return s === 'confirmed' ? 'chip-green' : s === 'pending' ? 'chip-orange' : s === 'completed' ? 'chip-blue' : s === 'cancelled' ? 'chip-red' : 'chip-gray'; }
     function sLabel(s) { return s === 'confirmed' ? 'مؤكد' : s === 'pending' ? 'انتظار' : s === 'completed' ? 'مكتمل' : s === 'cancelled' ? 'ملغي' : '—'; }
     function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i); return Math.abs(h).toString(36); }
@@ -2903,18 +2972,28 @@
     // ================================================
     let currentUser = null;
     let currentDoctorId = null;
-    let regData = {};
+    let currentRole = 'doctor'; // 'doctor' or 'secretary'
 
+    // ================================================
+    // AUTH SCREENS
+    // ================================================
     function showLogin() {
       document.getElementById('loginForm').style.display = '';
       document.getElementById('registerForm').style.display = 'none';
-      document.getElementById('loginError').classList.remove('show');
+      document.getElementById('secRegForm').style.display = 'none';
     }
     function showRegister() {
       document.getElementById('loginForm').style.display = 'none';
       document.getElementById('registerForm').style.display = '';
-      showRegStep(1);
+      document.getElementById('secRegForm').style.display = 'none';
     }
+    function showSecReg() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('secRegForm').style.display = '';
+    }
+    let regData = {};
+
     function showRegStep(n) {
       [1, 2, 3].forEach(i => {
         document.getElementById('reg_step' + i).style.display = i === n ? '' : 'none';
@@ -2954,10 +3033,17 @@
       if (pass.length < 6) { showToast('⚠️ كلمة المرور 6 أحرف على الأقل'); return; }
       if (pass !== pass2) { pe.classList.add('show'); return; }
 
-      const email = user + '@gmail.com'; // صيغة إيميل وهمي ل Supabase Auth
+      const email = user + '@gmail.com';
 
       // تسجيل في Supabase Auth
-      const { data, error } = await db.auth.signUp({ email, password: pass });
+      let data, error;
+      try {
+        const res = await db.auth.signUp({ email, password: pass });
+        data = res.data; error = res.error;
+      } catch (fetchErr) {
+        showToast('❌ تعذّر الاتصال بالسيرفر — تحقق من الإنترنت');
+        return;
+      }
       if (error) {
         if (error.message.includes('already')) ue.classList.add('show');
         else showToast('⚠️ ' + error.message);
@@ -3012,11 +3098,11 @@
     // ====== COUNTDOWN TIMER ======
     let countdownInterval = null;
 
-    function startCountdown(until, blockKey, attemptsKey){
+    function startCountdown(until, blockKey, attemptsKey) {
       stopCountdown();
       // إضافة عنصر العداد لو مش موجود
       let cdEl = document.getElementById('countdownBox');
-      if(!cdEl){
+      if (!cdEl) {
         cdEl = document.createElement('div');
         cdEl.id = 'countdownBox';
         cdEl.style.cssText = `
@@ -3032,10 +3118,10 @@
         loginForm.insertBefore(cdEl, firstBtn);
       }
 
-      function tick(){
+      function tick() {
         const now = Date.now();
         const remaining = Math.ceil((until - now) / 1000);
-        if(remaining <= 0){
+        if (remaining <= 0) {
           stopCountdown();
           localStorage.removeItem(blockKey);
           localStorage.removeItem(attemptsKey);
@@ -3044,10 +3130,10 @@
           return;
         }
         cdEl.style.display = 'block';
-        if(remaining > 60){
-          const mins = Math.floor(remaining/60);
+        if (remaining > 60) {
+          const mins = Math.floor(remaining / 60);
           const secs = remaining % 60;
-          cdEl.innerHTML = `⛔ محظور لمدة ${mins}:${secs.toString().padStart(2,'0')} دقيقة`;
+          cdEl.innerHTML = `⛔ محظور لمدة ${mins}:${secs.toString().padStart(2, '0')} دقيقة`;
         } else {
           cdEl.innerHTML = `⛔ انتظر ${remaining} ثانية قبل المحاولة مرة أخرى`;
         }
@@ -3056,10 +3142,10 @@
       countdownInterval = setInterval(tick, 1000);
     }
 
-    function stopCountdown(){
-      if(countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
+    function stopCountdown() {
+      if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
       const cdEl = document.getElementById('countdownBox');
-      if(cdEl) cdEl.style.display = 'none';
+      if (cdEl) cdEl.style.display = 'none';
     }
 
     async function doLogin() {
@@ -3087,8 +3173,16 @@
         }
       }
 
-      const email = user + '@gmail.com'; // صيغة إيميل وهمي ل Supabase Auth
-      const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
+      const email = user + '@gmail.com';
+      let data, error;
+      try {
+        const res = await db.auth.signInWithPassword({ email, password: pass });
+        data = res.data; error = res.error;
+      } catch (fetchErr) {
+        showToast('❌ تعذّر الاتصال بالسيرفر — تحقق من الإنترنت');
+        err.textContent = 'لا يوجد اتصال بالإنترنت'; err.classList.add('show');
+        return;
+      }
 
       if (error) {
         // زيادة عداد المحاولات
@@ -3111,28 +3205,39 @@
         return;
       }
 
-      // مسح المحاولات بعد الدخول الصح
+      currentUser = user;
       localStorage.removeItem(attemptsKey);
       localStorage.removeItem(blockKey);
       stopCountdown();
 
-      currentUser = user;
-      currentDoctorId = data.user.id;
-      localStorage.setItem('miaadi_session', JSON.stringify({ user, doctorId: data.user.id }));
+      // هل ده دكتور ولا سكرتيرة؟
+      const userId = data.user.id;
+      const { data: staffRow } = await db.from('staff').select('*').eq('user_id', userId).single();
 
-      // اشتقاق مفتاح التشفير من كلمة المرور
-      encKey = await deriveKey(pass, data.user.id);
+      if (staffRow) {
+        // سكرتيرة
+        currentRole = 'secretary';
+        currentDoctorId = staffRow.doctor_id;
+        localStorage.setItem('miaadi_session', JSON.stringify({ user, doctorId: staffRow.doctor_id, role: 'secretary', userId }));
+        encKey = await deriveKey(pass, staffRow.doctor_id);
+      } else {
+        // دكتور
+        currentRole = 'doctor';
+        currentDoctorId = userId;
+        localStorage.setItem('miaadi_session', JSON.stringify({ user, doctorId: userId, role: 'doctor' }));
+        encKey = await deriveKey(pass, userId);
+      }
 
       await loadDoctorData();
       bootApp();
-      showToast('👋 مرحباً بعودتك ' + DB.doctor.name);
+      showToast('👋 مرحباً بعودتك ' + (currentRole === 'secretary' ? user : DB.doctor.name));
     }
 
     function doLogout() {
       stopRealtime(); if (!confirm('هتسجل خروج؟')) return;
       db.auth.signOut();
       localStorage.removeItem('miaadi_session');
-      currentUser = null; currentDoctorId = null; encKey = null;
+      currentUser = null; currentDoctorId = null; encKey = null; currentRole = 'doctor';
       document.getElementById('authScreen').classList.remove('hidden');
       document.getElementById('appScreen').classList.remove('active');
       showLogin();
@@ -3140,87 +3245,238 @@
       document.getElementById('loginPass').value = '';
     }
 
+    // ================================================
+    // SECRETARY REGISTER
+    // ================================================
+    async function doSecRegister() {
+      const name = document.getElementById('secName').value.trim();
+      const user = document.getElementById('secUser').value.trim().toLowerCase();
+      const pass = document.getElementById('secPass').value;
+      const code = document.getElementById('secCode').value.trim().toUpperCase();
+      const codeErr = document.getElementById('secCodeError');
+      const userErr = document.getElementById('secUserError');
+      codeErr.classList.remove('show');
+      userErr.classList.remove('show');
+
+      if (!name) { showToast('⚠️ اكتبي اسمك'); return; }
+      if (!user) { showToast('⚠️ اكتبي اسم المستخدم'); return; }
+      if (pass.length < 6) { showToast('⚠️ كلمة المرور 6 أحرف على الأقل'); return; }
+      if (code.length !== 6) { showToast('⚠️ الكود 6 أرقام'); return; }
+
+      // تحقق من الكود
+      const { data: invite, error: invErr } = await db.from('invite_codes')
+        .select('*').eq('code', code).eq('used', false).single();
+
+      if (invErr || !invite) { codeErr.classList.add('show'); return; }
+      if (new Date(invite.expires_at) < new Date()) {
+        codeErr.textContent = 'الكود منتهي الصلاحية'; codeErr.classList.add('show'); return;
+      }
+
+      // إنشاء حساب في Supabase Auth
+      const email = user + '@miaadi.sec';
+      let regData, regError;
+      try {
+        const res = await db.auth.signUp({ email, password: pass });
+        regData = res.data; regError = res.error;
+      } catch (e) { showToast('❌ خطأ في الاتصال'); return; }
+
+      if (regError) {
+        if (regError.message.includes('already')) userErr.classList.add('show');
+        else showToast('⚠️ ' + regError.message);
+        return;
+      }
+
+      const userId = regData.user.id;
+
+      // تسجيل في جدول staff
+      await db.from('staff').insert({
+        doctor_id: invite.doctor_id,
+        user_id: userId,
+        username: user,
+        name: name,
+        role: 'secretary'
+      });
+
+      // تعليم الكود كمستخدم
+      await db.from('invite_codes').update({ used: true }).eq('id', invite.id);
+
+      showToast('✅ تم إنشاء الحساب! سجّلي دخولك دلوقتي');
+      showLogin();
+    }
+
+    // ================================================
+    // INVITE CODE — للدكتور
+    // ================================================
+    async function generateInvite() {
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+      const { error } = await db.from('invite_codes').insert({
+        doctor_id: currentDoctorId,
+        code,
+        expires_at: expiresAt,
+        used: false
+      });
+
+      if (error) { showToast('❌ خطأ في إنشاء الكود'); return; }
+
+      const box = document.getElementById('inviteBox');
+      box.innerHTML = `
+        <div style="text-align:center;padding:16px;background:var(--surface);border-radius:10px;border:2px dashed var(--accent)">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">كود الدعوة — صالح 24 ساعة</div>
+          <div style="font-size:32px;font-weight:900;letter-spacing:8px;color:var(--accent)">${code}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">ابعته للسكرتيرة عشان تسجل بيه</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px" onclick="generateInvite()">🔄 كود جديد</button>`;
+    }
+
+    async function loadStaff() {
+      if (currentRole === 'secretary') {
+        // السكرتيرة تشوف بيانات الدكتور اللي بتشتغل معاه
+        document.getElementById('staffCard').style.display = '';
+        document.getElementById('doctorStaffCard').style.display = 'none';
+        document.getElementById('staffDoctorInfo').innerHTML =
+          `<strong>${DB.doctor.name}</strong><br>
+           <span style="color:var(--muted)">${DB.doctor.spec || ''} — ${DB.doctor.clinic || ''}</span>`;
+        return;
+      }
+      // الدكتور يشوف الطاقم بتاعه
+      document.getElementById('staffCard').style.display = 'none';
+      document.getElementById('doctorStaffCard').style.display = '';
+      const { data: staff } = await db.from('staff').select('*').eq('doctor_id', currentDoctorId);
+      const list = staff || [];
+      const el = document.getElementById('staffList');
+      if (!list.length) {
+        el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0">لا يوجد طاقم مضاف بعد</div>`;
+        return;
+      }
+      el.innerHTML = list.map(s => `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div class="av av-sm" style="background:var(--accent)">${s.name.charAt(0)}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">${s.name}</div>
+            <div style="font-size:11px;color:var(--muted)">@${s.username} · سكرتيرة</div>
+          </div>
+          <button class="ib ib-red" title="إزالة" onclick="removeStaff('${s.id}','${s.name}')">✕</button>
+        </div>`).join('');
+    }
+
+    async function removeStaff(staffId, name) {
+      if (!confirm('هتشيل ' + name + ' من الطاقم؟')) return;
+      const { error } = await db.from('staff').delete().eq('id', staffId);
+      if (error) { showToast('❌ خطأ'); return; }
+      showToast('✅ تم إزالة ' + name);
+      loadStaff();
+    }
+
     async function checkSession() {
       const s = localStorage.getItem('miaadi_session');
       if (!s) return false;
-      const { user, doctorId } = JSON.parse(s);
-      const { data } = await db.auth.getSession();
-      if (!data.session) return false;
-      currentUser = user;
-      currentDoctorId = doctorId;
-      await loadDoctorData();
-      return true;
+      const { user, doctorId, role } = JSON.parse(s);
+      try {
+        const { data, error } = await db.auth.getSession();
+        if (error || !data.session) {
+          const { data: refreshData, error: refreshError } = await db.auth.refreshSession();
+          if (refreshError || !refreshData.session) {
+            localStorage.removeItem('miaadi_session');
+            return false;
+          }
+        }
+        currentUser = user;
+        currentDoctorId = doctorId;
+        currentRole = role || 'doctor';
+        await loadDoctorData();
+        return true;
+      } catch (e) {
+        console.error('Session check failed:', e);
+        localStorage.removeItem('miaadi_session');
+        return false;
+      }
     }
 
     async function loadDoctorData() {
-      const { data: doc } = await db.from('doctors').select('*').eq('id', currentDoctorId).single();
-      if (doc) DB.doctor = { ...doc };
+      try {
+        const { data: doc } = await db.from('doctors').select('*').eq('id', currentDoctorId).single();
+        if (doc) DB.doctor = { ...doc };
 
-      const { data: pats } = await db.from('patients').select('*').eq('doctor_id', currentDoctorId);
-      DB.patients = await Promise.all((pats || []).map(decryptPatient));
+        const { data: pats } = await db.from('patients').select('*').eq('doctor_id', currentDoctorId);
+        DB.patients = await Promise.all((pats || []).map(decryptPatient));
 
-      const { data: apts } = await db.from('appointments').select('*').eq('doctor_id', currentDoctorId);
-      DB.appointments = await Promise.all((apts || []).map(decryptAppointment));
+        const { data: apts } = await db.from('appointments').select('*').eq('doctor_id', currentDoctorId);
+        DB.appointments = await Promise.all((apts || []).map(decryptAppointment));
 
-      const { data: reqs } = await db.from('requests').select('*').eq('doctor_id', currentDoctorId);
-      DB.requests = reqs || [];
+        const { data: reqs } = await db.from('requests').select('*').eq('doctor_id', currentDoctorId);
+        DB.requests = reqs || [];
 
-      const { data: rxs } = await db.from('prescriptions').select('*').eq('doctor_id', currentDoctorId);
-      DB.prescriptions = await Promise.all((rxs || []).map(decryptPrescription));
+        const { data: rxs } = await db.from('prescriptions').select('*').eq('doctor_id', currentDoctorId);
+        DB.prescriptions = await Promise.all((rxs || []).map(decryptPrescription));
 
-      const { data: notifs } = await db.from('notifications').select('*').eq('doctor_id', currentDoctorId);
-      DB.notifications = notifs || [];
-    }
-
-    function doLogout() {
-      if (!confirm('هتسجل خروج؟')) return;
-      db.auth.signOut();
-      localStorage.removeItem('miaadi_session');
-      currentUser = null; currentDoctorId = null; encKey = null;
-      document.getElementById('authScreen').classList.remove('hidden');
-      document.getElementById('appScreen').classList.remove('active');
-      showLogin();
-      document.getElementById('loginUser').value = '';
-      document.getElementById('loginPass').value = '';
-    }
-
-    async function checkSession() {
-      const s = localStorage.getItem('miaadi_session');
-      if (!s) return false;
-      const { user, doctorId } = JSON.parse(s);
-      const { data } = await db.auth.getSession();
-      if (!data.session) return false;
-      currentUser = user;
-      currentDoctorId = doctorId;
-      await loadDoctorData();
-      return true;
+        const { data: notifs } = await db.from('notifications').select('*').eq('doctor_id', currentDoctorId);
+        DB.notifications = notifs || [];
+      } catch (e) {
+        console.error('❌ loadDoctorData failed:', e);
+        showToast('❌ خطأ في تحميل البيانات — تحقق من الإنترنت');
+        throw e;
+      }
     }
 
     async function saveWithUser() {
       if (!currentDoctorId) return;
+      markLocalSave();
+      try {
+        // حفظ البيشنتس (مشفرة)
+        for (const p of DB.patients) {
+          const enc = await encryptPatient(p);
+          const { error } = await db.from('patients').upsert(
+            { ...enc, doctor_id: currentDoctorId },
+            { onConflict: 'id' }
+          );
+          if (error) console.error('Error saving patient:', error);
+        }
 
-      // حفظ البيشنتس (مشفرة)
-      for (const p of DB.patients) {
-        const enc = await encryptPatient(p);
-        await db.from('patients').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
-      }
-      // حفظ المواعيد (مشفرة)
-      for (const a of DB.appointments) {
-        const enc = await encryptAppointment(a);
-        await db.from('appointments').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
-      }
-      // حفظ الطلبات
-      for (const r of DB.requests) {
-        await db.from('requests').upsert({ ...r, doctor_id: currentDoctorId }, { onConflict: 'id' });
-      }
-      // حفظ الروشتات (مشفرة)
-      for (const rx of DB.prescriptions) {
-        const enc = await encryptPrescription(rx);
-        await db.from('prescriptions').upsert({ ...enc, doctor_id: currentDoctorId }, { onConflict: 'id' });
-      }
-      // حفظ الإشعارات
-      for (const n of DB.notifications) {
-        await db.from('notifications').upsert({ ...n, doctor_id: currentDoctorId }, { onConflict: 'id' });
+        // حفظ المواعيد (مشفرة)
+        for (const a of DB.appointments) {
+          const enc = await encryptAppointment(a);
+          const { error } = await db.from('appointments').upsert(
+            { ...enc, doctor_id: currentDoctorId },
+            { onConflict: 'id' }
+          );
+          if (error) console.error('Error saving appointment:', error);
+        }
+
+        // حفظ الطلبات
+        for (const r of DB.requests) {
+          const { error } = await db.from('requests').upsert(
+            { ...r, doctor_id: currentDoctorId },
+            { onConflict: 'id' }
+          );
+          if (error) console.error('Error saving request:', error);
+        }
+
+        // حفظ الروشتات (مشفرة)
+        for (const rx of DB.prescriptions) {
+          const enc = await encryptPrescription(rx);
+          const { error } = await db.from('prescriptions').upsert(
+            { ...enc, doctor_id: currentDoctorId },
+            { onConflict: 'id' }
+          );
+          if (error) console.error('Error saving prescription:', error);
+        }
+
+        // حفظ الإشعارات
+        for (const n of DB.notifications) {
+          const { error } = await db.from('notifications').upsert(
+            { ...n, doctor_id: currentDoctorId },
+            { onConflict: 'id' }
+          );
+          if (error) console.error('Error saving notification:', error);
+        }
+
+        console.log('✅ All data saved successfully');
+      } catch (err) {
+        console.error('❌ Error in saveWithUser:', err);
+      } finally {
+        unmarkLocalSave();
       }
     }
 
@@ -3250,37 +3506,54 @@
     // ================================================
     // BOOT APP
     // ================================================
-    // ================================================
     // REALTIME — تحديث فوري بين الأجهزة
     // ================================================
     let realtimeChannel = null;
+    let localSaveInProgress = false;
+    let localSaveTimer = null;
+
+    function markLocalSave() {
+      localSaveInProgress = true;
+      if (localSaveTimer) clearTimeout(localSaveTimer);
+      localSaveTimer = setTimeout(() => { localSaveInProgress = false; }, 4000);
+    }
+
+    function unmarkLocalSave() {
+      localSaveInProgress = false;
+      if (localSaveTimer) { clearTimeout(localSaveTimer); localSaveTimer = null; }
+    }
 
     function startRealtime() {
       if (realtimeChannel) { realtimeChannel.unsubscribe(); realtimeChannel = null; }
 
-      realtimeChannel = db.channel('doctor_' + currentDoctorId)
+      realtimeChannel = db.channel('clinic_' + currentDoctorId, {
+        config: { broadcast: { self: false } }
+      })
         .on('postgres_changes', {
           event: '*', schema: 'public', table: 'appointments',
           filter: 'doctor_id=eq.' + currentDoctorId
         }, async (payload) => {
+          if (localSaveInProgress) return;
           const { data: apts } = await db.from('appointments').select('*').eq('doctor_id', currentDoctorId);
           DB.appointments = await Promise.all((apts || []).map(decryptAppointment));
           realtimeUpdate();
-          showToast('🔄 تم تحديث المواعيد');
+          showToast('🔄 تحديث مواعيد من جهاز آخر');
         })
         .on('postgres_changes', {
           event: '*', schema: 'public', table: 'patients',
           filter: 'doctor_id=eq.' + currentDoctorId
         }, async (payload) => {
+          if (localSaveInProgress) return;
           const { data: pats } = await db.from('patients').select('*').eq('doctor_id', currentDoctorId);
           DB.patients = await Promise.all((pats || []).map(decryptPatient));
           realtimeUpdate();
-          showToast('🔄 تم تحديث البيشنتس');
+          showToast('🔄 تحديث بيشنتس من جهاز آخر');
         })
         .on('postgres_changes', {
           event: '*', schema: 'public', table: 'requests',
           filter: 'doctor_id=eq.' + currentDoctorId
         }, async (payload) => {
+          // الطلبات دايمًا من بوابة المريض — خدها دايمًا
           const { data: reqs } = await db.from('requests').select('*').eq('doctor_id', currentDoctorId);
           DB.requests = reqs || [];
           realtimeUpdate();
@@ -3290,13 +3563,20 @@
           event: '*', schema: 'public', table: 'notifications',
           filter: 'doctor_id=eq.' + currentDoctorId
         }, async (payload) => {
+          if (localSaveInProgress) return;
           const { data: notifs } = await db.from('notifications').select('*').eq('doctor_id', currentDoctorId);
           DB.notifications = notifs || [];
           renderNotifs(); updateBadges();
         })
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.log('✅ Realtime متصل');
+            console.log('✅ Realtime متصل: clinic_' + currentDoctorId);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Realtime error — retrying in 3s');
+            setTimeout(() => { if (currentDoctorId) { stopRealtime(); startRealtime(); } }, 3000);
+          } else if (status === 'TIMED_OUT') {
+            console.warn('⏱ Realtime timeout — reconnecting');
+            setTimeout(() => { if (currentDoctorId) { stopRealtime(); startRealtime(); } }, 2000);
           }
         });
     }
@@ -3305,10 +3585,23 @@
       if (realtimeChannel) { realtimeChannel.unsubscribe(); realtimeChannel = null; }
     }
 
+    // مراقبة حالة الـ auth — تجديد التوكن أو تسجيل الخروج
+    db.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED' && session && currentDoctorId) {
+        console.log('✅ Token refreshed — restarting Realtime');
+        stopRealtime();
+        startRealtime();
+      }
+      if (event === 'SIGNED_OUT' && currentUser) {
+        doLogout();
+      }
+    });
+
     function bootApp() {
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('appScreen').classList.add('active');
       startRealtime();
+      applyRoleUI();
       // Populate settings
       const d = DB.doctor;
       document.getElementById('set_name').value = d.name || '';
@@ -3323,6 +3616,27 @@
       renderDashboard();
       updateBadges();
       renderNotifs();
+    }
+
+    function applyRoleUI() {
+      const isSec = currentRole === 'secretary';
+      // السكرتيرة مش بتشوف زرار إضافة بيشنت والإعدادات الخاصة بالدكتور
+      const hideForSec = ['nav_settings'];
+      hideForSec.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = isSec ? 'none' : '';
+      });
+      // السكرتيرة تشوف بادج role في السايدبار
+      if (isSec) {
+        const roleTag = document.createElement('div');
+        roleTag.style.cssText = 'font-size:10px;background:rgba(0,212,255,0.15);color:var(--accent);padding:2px 8px;border-radius:20px;margin-top:3px;width:fit-content';
+        roleTag.textContent = '🗂️ سكرتيرة';
+        roleTag.id = 'roleTag';
+        const sideSpec = document.getElementById('sideSpec');
+        if (sideSpec && !document.getElementById('roleTag')) {
+          sideSpec.parentNode.insertBefore(roleTag, sideSpec.nextSibling);
+        }
+      }
     }
 
     function updateSidebar() {
@@ -3523,7 +3837,7 @@
       if (!a) return;
       a.status = 'confirmed';
       addNotif('✅ تم تأكيد موعد ' + a.patName + ' — ' + fmtDate(a.date));
-      saveWithUser(); realtimeUpdate();
+      realtimeUpdate(); markLocalSave(); saveWithUser().then(() => { unmarkLocalSave(); });
       showToast('✅ تم تأكيد موعد ' + a.patName);
     }
 
@@ -3541,7 +3855,7 @@
         });
       }
       addNotif('✅ اكتمل موعد ' + a.patName + ' وتم تسجيله في ملف البيشنت');
-      saveWithUser(); realtimeUpdate();
+      realtimeUpdate(); markLocalSave(); saveWithUser().then(() => { unmarkLocalSave(); });
       showToast('✅ تم إنهاء الموعد — تم تسجيله في ملف ' + a.patName);
     }
 
@@ -3551,18 +3865,19 @@
       if (!a) return;
       a.status = 'cancelled';
       addNotif('⚠️ تم إلغاء موعد ' + a.patName);
-      saveWithUser(); realtimeUpdate();
+      realtimeUpdate(); markLocalSave(); saveWithUser().then(() => { unmarkLocalSave(); });
       showToast('🗑 تم إلغاء الموعد');
     }
 
-    function saveAppt() {
+    async function saveAppt() {
       const patId = document.getElementById('apptPat').value;
       const date = document.getElementById('apptDate').value;
       if (!patId) { showToast('⚠️ اختار البيشنت'); return; }
       if (!date) { showToast('⚠️ اختار التاريخ'); return; }
       const pat = DB.patients.find(p => p.id === patId);
       const a = {
-        id: 'A' + Date.now(), patId, patName: pat.name,
+        id: 'appt_' + generateUUID(), // تم التعديل هنا
+        patId, patName: pat.name,
         date, time: document.getElementById('apptTime').value,
         type: document.getElementById('apptType').value,
         payment: document.getElementById('apptPay').value,
@@ -3573,7 +3888,10 @@
       };
       DB.appointments.push(a);
       addNotif('📅 موعد جديد: ' + pat.name + ' — ' + fmtDate(date) + ' الساعة ' + a.time);
-      saveWithUser(); closeModal('addApptModal'); realtimeUpdate();
+      closeModal('addApptModal'); realtimeUpdate();
+      markLocalSave();
+      await saveWithUser();
+      unmarkLocalSave();
       ['apptPat', 'apptComplaint', 'apptNotes'].forEach(id => document.getElementById(id).value = '');
       showToast('✅ تم إضافة موعد ' + pat.name + ' — ' + fmtDate(date));
     }
@@ -3639,13 +3957,14 @@
       }).join('');
     }
 
-    function savePat() {
+    async function savePat() {
       const name = document.getElementById('pName').value.trim();
       const phone = document.getElementById('pPhone').value.trim();
       if (!name) { showToast('⚠️ اكتب الاسم'); return; }
       if (!phone) { showToast('⚠️ اكتب رقم الهاتف'); return; }
       const pat = {
-        id: genId(), name, phone,
+        id: generateUUID(), // تم التعديل هنا
+        name, phone,
         age: parseInt(document.getElementById('pAge').value) || 0,
         gender: document.getElementById('pGender').value,
         complaint: document.getElementById('pComplaint').value,
@@ -3656,7 +3975,10 @@
       };
       DB.patients.push(pat);
       addNotif('👤 تم إضافة بيشنت جديد: ' + name);
-      saveWithUser(); closeModal('addPatModal'); realtimeUpdate();
+      closeModal('addPatModal'); realtimeUpdate();
+      markLocalSave();
+      await saveWithUser();
+      unmarkLocalSave();
       ['pName', 'pPhone', 'pAge', 'pComplaint', 'pHistory'].forEach(id => document.getElementById(id).value = '');
       updatePatSelect();
       showToast('✅ تم إضافة ' + name);
@@ -3769,7 +4091,8 @@
       };
       p.visits.push(v);
       addNotif('📋 تم تسجيل زيارة لـ ' + p.name);
-      saveWithUser(); closeModal('addVisitModal'); openProfile(p.id); realtimeUpdate();
+      closeModal('addVisitModal'); openProfile(p.id); realtimeUpdate();
+      markLocalSave(); saveWithUser().then(() => { unmarkLocalSave(); });
       showToast('✅ تم تسجيل الزيارة');
     }
 
@@ -3829,14 +4152,15 @@
       if (!r) return;
       r.status = 'accepted';
       const pat = {
-        id: genId(), name: r.name, phone: r.phone,
+        id: generateUUID(), // تم التعديل هنا
+        name: r.name, phone: r.phone,
         age: r.age, gender: r.gender, complaint: r.complaint,
         history: '', source: 'platform',
         color: rColor(r.name), visits: [], createdAt: now()
       };
       DB.patients.push(pat);
       addNotif('✅ تم قبول طلب ' + r.name + ' وإضافته للبيشنتس');
-      saveWithUser();
+      markLocalSave(); saveWithUser().then(() => { unmarkLocalSave(); });
       const card = document.getElementById('rc_' + id);
       if (card) {
         card.style.transition = 'all 0.4s';
@@ -3853,7 +4177,7 @@
       if (!r) return;
       r.status = 'rejected';
       addNotif('⚠️ تم رفض طلب ' + r.name);
-      saveWithUser();
+      markLocalSave(); saveWithUser().then(() => { unmarkLocalSave(); });
       const card = document.getElementById('rc_' + id);
       if (card) {
         card.style.transition = 'all 0.4s';
@@ -3961,7 +4285,8 @@
       const drugs = rxDrugs.filter(d => d.name.trim());
       if (!drugs.length) { showToast('⚠️ أضف دواء على الأقل'); return; }
       const rx = {
-        id: 'RX' + Date.now(), patId: p.id, patName: p.name,
+        id: 'rx_' + generateUUID(), // تم التعديل هنا
+        patId: p.id, patName: p.name,
         date: today(), drugs, notes: document.getElementById('rxNotes').value,
         createdAt: now()
       };
@@ -4130,11 +4455,13 @@
     // SETTINGS
     // ================================================
     function showStab(name, el) {
-      ['profile', 'clinic', 'account', 'security'].forEach(t => {
-        document.getElementById('stab_' + t).style.display = t === name ? '' : 'none';
+      ['profile', 'clinic', 'staff', 'account', 'security'].forEach(t => {
+        const el2 = document.getElementById('stab_' + t);
+        if (el2) el2.style.display = t === name ? '' : 'none';
       });
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       if (el) el.classList.add('active');
+      if (name === 'staff') loadStaff();
     }
 
     function saveSettings() {
@@ -4185,7 +4512,7 @@
       if (!confirm('هتحذف كل البيانات نهائياً؟')) return;
       if (!confirm('ده قرار نهائي — متأكد؟')) return;
       DB = { doctor: DB.doctor, patients: [], appointments: [], requests: [], prescriptions: [], vacations: [], notifications: [], idCounter: 300 };
-      saveWithUser(); realtimeUpdate();
+      markLocalSave(); saveWithUser().then(() => { unmarkLocalSave(); }); realtimeUpdate();
       showToast('🗑 تم مسح كل البيانات');
     }
 
@@ -4193,7 +4520,12 @@
     // NOTIFICATIONS
     // ================================================
     function addNotif(text) {
-      DB.notifications.unshift({ id: 'n' + Date.now(), text, time: now(), read: false });
+      DB.notifications.unshift({
+        id: 'notif_' + generateUUID(), // تم التعديل هنا
+        text,
+        time: now(),
+        read: false
+      });
       if (DB.notifications.length > 50) DB.notifications = DB.notifications.slice(0, 50);
       renderNotifs();
     }
